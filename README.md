@@ -17,10 +17,10 @@ A real-time system monitoring solution that displays system metrics, battery sta
 - Real-time monitoring of system metrics:
   - CPU usage percentage
   - CPU temperature
-  - Memory usage percentage
+  - RAM usage percentage
   - Swap usage percentage
 - Battery information:
-  - Charging status ('+' for charging, '-' for discharging)
+  - Charging status
   - Battery percentage
 - System information:
   - Current username

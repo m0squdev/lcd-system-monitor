@@ -61,8 +61,8 @@ fn read_cpu_and_memory(sys: &System, components: &Components) -> String
     let memory_usage = sys.used_memory() as f32 / sys.total_memory() as f32 * 100.0;
     let swap_usage = sys.used_swap() as f32 / sys.total_swap() as f32 * 100.0;
 
-    let line1 = format!("CPU%{:.0} Temp:{:.0}", cpu_usage, avg_temperature);
-    let line2 = format!("Mem%{:.0} Swp%{:.0}", memory_usage, swap_usage);
+    let line1 = format!("CPU {:.0}% {:.0}^C", cpu_usage, avg_temperature);
+    let line2 = format!("RAM {:.0}% Swp {:.0}%", memory_usage, swap_usage);
     format!("{};{}", line1, line2)
 }
 
@@ -72,24 +72,20 @@ fn read_battery_and_network() -> String
     let mut batteries = battery_manager.batteries().expect("Couldn't retrieve batteries");
     let battery = batteries.next().expect("Couldn't retrieve battery").expect("This lib really likes Rust safety with expect()");
     let battery_state = battery.state().to_string();
-    let battery_state_symbol;
+    let battery_state_symbols;
     if battery_state == "charging"
     {
-        battery_state_symbol = "+";
-    }
-    else if battery_state == "discharging"
-    {
-        battery_state_symbol = "-";
+        battery_state_symbols = "` ";
     }
     else {
-        battery_state_symbol = "?";
+        battery_state_symbols = "";
     }
     let battery_percentage = battery.state_of_charge().value * 100.0;
     let user = whoami::username();
 
     let host = hostname::get().expect("Couldn't retrieve hostname").to_string_lossy().into_owned();
 
-    let line1 = format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user);
+    let line1 = format!("{}{:.0}% Usr:{}", battery_state_symbols, battery_percentage, user);
     let line2 = format!("{}", host);
     format!("{};{}", line1, line2)
 }

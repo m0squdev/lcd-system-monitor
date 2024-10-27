@@ -4,5 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+battery = "0.7.8"
+hostname = "0.4.0"
 serial = "0.4.0"
 sysinfo = "0.32.0"
+whoami = "1.5.2"

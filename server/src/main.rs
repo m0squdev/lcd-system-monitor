@@ -1,3 +1,5 @@
+use battery;
+use hostname;
 use serial::prelude::*;
 use std::
 {
@@ -16,6 +18,7 @@ use sysinfo::
     Components,
     System
 };
+use whoami;
 
 fn get_dev() -> String
 {
@@ -42,12 +45,11 @@ fn get_dev() -> String
     dev
 }
 
-fn read_values(sys: &System) -> String
+fn read_cpu_and_memory(sys: &System, components: &Components) -> String
 {
     let cpu_usage = sys.global_cpu_usage();
-    let components = Components::new_with_refreshed_list();
     let mut temperatures: Vec<f32> = Vec::new();
-    for component in &components
+    for component in components
     {
         if format!("{:?}", component).contains("Core")
         {
@@ -55,10 +57,40 @@ fn read_values(sys: &System) -> String
         }
     }
     let avg_temperature = temperatures.iter().sum::<f32>() / temperatures.len() as f32;
+
     let memory_usage = sys.used_memory() as f32 / sys.total_memory() as f32 * 100.0;
     let swap_usage = sys.used_swap() as f32 / sys.total_swap() as f32 * 100.0;
-    let line1 = format!("CPU%{:.0} Temp {:.0}", cpu_usage, avg_temperature);
+
+    let line1 = format!("CPU%{:.0} Temp:{:.0}", cpu_usage, avg_temperature);
     let line2 = format!("Mem%{:.0} Swp%{:.0}", memory_usage, swap_usage);
+    format!("{};{}", line1, line2)
+}
+
+fn read_battery_and_network() -> String
+{
+    let battery_manager = battery::Manager::new().expect("Couldn't create instance of battery::Manager");
+    let mut batteries = battery_manager.batteries().expect("Couldn't retrieve batteries");
+    let battery = batteries.next().expect("Couldn't retrieve battery").expect("This lib really likes Rust safety with expect()");
+    let battery_state = battery.state().to_string();
+    let battery_state_symbol;
+    if battery_state == "charging"
+    {
+        battery_state_symbol = "+";
+    }
+    else if battery_state == "discharging"
+    {
+        battery_state_symbol = "-";
+    }
+    else {
+        battery_state_symbol = "?";
+    }
+    let battery_percentage = battery.state_of_charge().value * 100.0;
+    let user = whoami::username();
+
+    let host = hostname::get().expect("Couldn't retrieve hostname").to_string_lossy().into_owned();
+
+    let line1 = format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user);
+    let line2 = format!("{}", host);
     format!("{};{}", line1, line2)
 }
 
@@ -78,13 +110,29 @@ fn main()
     println!("Serial connection to {} initialized successfully.\nTransmitting info at 9600 bauds.", dev);
 
     let mut sys = System::new();
+    let mut components = Components::new();
+    let mut screen = true;
+    let mut times_displayed = 0;
     loop
     {
-        sys.refresh_all();
-        let content = read_values(&sys);
+        if times_displayed > 4        {
+            screen = !screen;
+            times_displayed = 0;
+        }
+        let content;
+        if screen
+        {
+            sys.refresh_all();
+            components.refresh_list();
+            content = read_cpu_and_memory(&sys, &components);
+        }
+        else {
+            content = read_battery_and_network();
+        }
         print!("{}      \r", content);
         stdout().flush().expect("Couldn't flush stdout");
         port.write(format!("{}\n", content).as_bytes()).expect("Couldn't write to serial");
+        times_displayed += 1;
         thread::sleep(Duration::from_secs(1));
     }
 }

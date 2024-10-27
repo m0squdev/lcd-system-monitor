@@ -46,10 +46,18 @@ fn read_values(sys: &System) -> String
 {
     let cpu_usage = sys.global_cpu_usage();
     let components = Components::new_with_refreshed_list();
-    let cpu_temp = components[0].temperature();
+    let mut temperatures: Vec<f32> = Vec::new();
+    for component in &components
+    {
+        if format!("{:?}", component).contains("Core")
+        {
+            temperatures.push(component.temperature());
+        }
+    }
+    let avg_temperature = temperatures.iter().sum::<f32>() / temperatures.len() as f32;
     let memory_usage = sys.used_memory() as f32 / sys.total_memory() as f32 * 100.0;
     let swap_usage = sys.used_swap() as f32 / sys.total_swap() as f32 * 100.0;
-    let line1 = format!("CPU%{:.0} Temp {}", cpu_usage, cpu_temp);
+    let line1 = format!("CPU%{:.0} Temp {:.0}", cpu_usage, avg_temperature);
     let line2 = format!("Mem%{:.0} Swp%{:.0}", memory_usage, swap_usage);
     format!("{};{}", line1, line2)
 }

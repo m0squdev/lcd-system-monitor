@@ -43,6 +43,7 @@ fn main()
         settings.set_char_size(serial::Bits8);
         settings.set_parity(serial::ParityNone);
         settings.set_stop_bits(serial::Stop1);
+        settings.set_flow_control(serial::FlowNone);
         Ok(())
     }).expect("Couldn't configure serial connection");
     println!("Serial connection initialized successfully.\nTransmitting info at 9600 bauds.");
@@ -59,7 +60,7 @@ fn main()
         let line1 = format!("CPU%{:.0} Temp {}", cpu_usage, cpu_temp);
         let line2 = format!("Mem%{:.0} Swp%{:.0}", memory_usage, swap_usage);
         let content = format!("{};{}", line1, line2);
-        print!("{}     \r", content);
+        print!("{}      \r", content);
         stdout().flush().expect("Couldn't flush stdout");
         port.write(format!("{}\n", content).as_bytes()).expect("Couldn't write to serial");
         thread::sleep(Duration::from_secs(1));

@@ -9,9 +9,9 @@ A real-time system monitoring solution that displays CPU, memory, and temperatur
 - I2C LCD Display (16x2 characters)
 - USB-to-Serial connection
 
-### Software Components
-- Arduino client program (`client.ino`)
-- Rust server application (`server`)
+### Program Components
+- Arduino client program (`./client`)
+- Rust server application (`./server`)
 
 ## Features
 
@@ -35,44 +35,23 @@ A real-time system monitoring solution that displays CPU, memory, and temperatur
    - Wire (built-in)
    - LiquidCrystal_I2C
 
-3. Upload `client.ino` to your Arduino board
+3. Upload `./client/client.ino` to your Arduino board
 
 ### Rust Server Setup
 
-1. Ensure you have Rust and Cargo installed
-2. Clone this repository
-3. Navigate to `./server` directory
-4. Build the project:
-   ```bash
-   cargo build --release
-   ```
-
-## Usage
-
-1. Connect the Arduino to your computer via USB
-2. Run the server application:
+1. Connect the Arduino to your computer
+2. Navigate to `./server` directory
+3. Run the server application:
    ```bash
    cargo run --release
    ```
-3. When prompted, enter your serial device name:
+4. When prompted, enter your serial device name:
    - Press Enter for default (`/dev/ttyUSB0`)
    - Or enter the specific device suffix (e.g., `ACM0` for `/dev/ttyACM0`)
 
 You can also run `cargo run --release <device>` to avoid being prompted and create a connection to the specified device.
 
 And you're done!
-
-## Project Structure
-
-```
-.
-├── client/
-│   └── client.ino          # Arduino code for LCD display
-└── server/
-    ├── Cargo.toml          # Rust dependencies and project metadata
-    └── src/
-        └── main.rs         # Server implementation
-```
 
 ## Dependencies
 

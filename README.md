@@ -42,6 +42,7 @@ A real-time system monitoring solution that displays CPU, memory, and temperatur
 1. Connect the Arduino to your computer
 2. Navigate to `./server` directory
 3. Run the server application:
+
    ```bash
    cargo run --release
    ```

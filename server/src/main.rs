@@ -2,7 +2,8 @@ use serial::prelude::*;
 use std::
 {
     env,
-    io::{
+    io::
+    {
         stdin,
         stdout,
         Write
@@ -10,12 +11,13 @@ use std::
     thread,
     time::Duration
 };
-use sysinfo::{
+use sysinfo::
+{
     Components,
     System
 };
 
-fn main()
+fn get_dev() -> String
 {
     let dev;
     let args: Vec<String> = env::args().collect();
@@ -23,7 +25,8 @@ fn main()
     {
         dev = args[1].clone();
     }
-    else {
+    else
+    {
         let dev_prefix = String::from("/dev/tty");
         print!("Enter client device (leave blank for /dev/ttyUSB0\n{}", dev_prefix);
         stdout().flush().expect("Couldn't flush stdout");
@@ -36,7 +39,24 @@ fn main()
         }
         dev = dev_prefix + dev_suffix;  // You can use the "+" operator to concatenate a String and a str
     }
-    let mut port = serial::open(&dev).expect("Couldn't open serial connection");
+    dev
+}
+
+fn read_values(sys: &System) -> String
+{
+    let cpu_usage = sys.global_cpu_usage();
+    let components = Components::new_with_refreshed_list();
+    let cpu_temp = components[0].temperature();
+    let memory_usage = sys.used_memory() as f32 / sys.total_memory() as f32 * 100.0;
+    let swap_usage = sys.used_swap() as f32 / sys.total_swap() as f32 * 100.0;
+    let line1 = format!("CPU%{:.0} Temp {}", cpu_usage, cpu_temp);
+    let line2 = format!("Mem%{:.0} Swp%{:.0}", memory_usage, swap_usage);
+    format!("{};{}", line1, line2)
+}
+
+fn main()
+{
+    let mut port = serial::open(&get_dev()).expect("Couldn't open serial connection");
     port.reconfigure(&|settings|
     {
         settings.set_baud_rate(serial::Baud9600).expect("Couldn't set baud rate");
@@ -52,14 +72,7 @@ fn main()
     loop
     {
         sys.refresh_all();
-        let cpu_usage = sys.global_cpu_usage();
-        let components = Components::new_with_refreshed_list();
-        let cpu_temp = components[0].temperature();
-        let memory_usage = sys.used_memory() as f32 / sys.total_memory() as f32 * 100.0;
-        let swap_usage = sys.used_swap() as f32 / sys.total_swap() as f32 * 100.0;
-        let line1 = format!("CPU%{:.0} Temp {}", cpu_usage, cpu_temp);
-        let line2 = format!("Mem%{:.0} Swp%{:.0}", memory_usage, swap_usage);
-        let content = format!("{};{}", line1, line2);
+        let content = read_values(&sys);
         print!("{}      \r", content);
         stdout().flush().expect("Couldn't flush stdout");
         port.write(format!("{}\n", content).as_bytes()).expect("Couldn't write to serial");

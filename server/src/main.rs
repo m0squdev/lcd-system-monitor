@@ -64,7 +64,8 @@ fn read_values(sys: &System) -> String
 
 fn main()
 {
-    let mut port = serial::open(&get_dev()).expect("Couldn't open serial connection");
+    let dev = get_dev();
+    let mut port = serial::open(&dev).expect("Couldn't open serial connection");
     port.reconfigure(&|settings|
     {
         settings.set_baud_rate(serial::Baud9600).expect("Couldn't set baud rate");
@@ -74,7 +75,7 @@ fn main()
         settings.set_flow_control(serial::FlowNone);
         Ok(())
     }).expect("Couldn't configure serial connection");
-    println!("Serial connection initialized successfully.\nTransmitting info at 9600 bauds.");
+    println!("Serial connection to {} initialized successfully.\nTransmitting info at 9600 bauds.", dev);
 
     let mut sys = System::new();
     loop

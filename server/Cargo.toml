@@ -1,0 +1,8 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serial = "0.4.0"
+sysinfo = "0.32.0"

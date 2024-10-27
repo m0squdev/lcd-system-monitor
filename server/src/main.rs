@@ -1,13 +1,14 @@
 use serial::prelude::*;
 use std::
 {
+    env,
+    io::{
+        stdin,
+        stdout,
+        Write
+    },
     thread,
     time::Duration
-};
-use std::io::{
-    stdin,
-    stdout,
-    Write
 };
 use sysinfo::{
     Components,
@@ -16,17 +17,25 @@ use sysinfo::{
 
 fn main()
 {
-    let dev_prefix = String::from("/dev/tty");
-    print!("Enter client device (leave blank for /dev/ttyUSB0\n{}", dev_prefix);
-    stdout().flush().expect("Couldn't flush stdout");
-    let mut input = String::new();
-    stdin().read_line(&mut input).expect("Couldn't read user input");
-    let mut dev_suffix = input.trim();
-    if dev_suffix.is_empty()
+    let dev;
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 1
     {
-        dev_suffix = "USB0";
+        dev = args[1].clone();
     }
-    let dev = dev_prefix + dev_suffix;  // You can use the "+" operator to concatenate a String and a str
+    else {
+        let dev_prefix = String::from("/dev/tty");
+        print!("Enter client device (leave blank for /dev/ttyUSB0\n{}", dev_prefix);
+        stdout().flush().expect("Couldn't flush stdout");
+        let mut input = String::new();
+        stdin().read_line(&mut input).expect("Couldn't read user input");
+        let mut dev_suffix = input.trim();
+        if dev_suffix.is_empty()
+        {
+            dev_suffix = "USB0";
+        }
+        dev = dev_prefix + dev_suffix;  // You can use the "+" operator to concatenate a String and a str
+    }
     let mut port = serial::open(&dev).expect("Couldn't open serial connection");
     port.reconfigure(&|settings|
     {

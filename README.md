@@ -57,6 +57,7 @@ A real-time system monitoring solution that displays CPU, memory, and temperatur
 3. When prompted, enter your serial device name:
    - Press Enter for default (`/dev/ttyUSB0`)
    - Or enter the specific device suffix (e.g., `ACM0` for `/dev/ttyACM0`)
+You can also run `cargo run --release <device>` to avoid being prompted and create a connection to the specified device.
 
 And you're done!
 

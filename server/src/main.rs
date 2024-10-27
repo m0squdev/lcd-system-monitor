@@ -45,10 +45,10 @@ fn main()
         let cpu_usage = sys.global_cpu_usage();
         let components = Components::new_with_refreshed_list();
         let cpu_temp = components[0].temperature();
-        let memory_usage = (sys.used_memory() as f32 / sys.total_memory() as f32 * 100.0) as u8;
-        let swap_usage = (sys.used_swap() as f32 / sys.total_swap() as f32 * 100.0) as u8;
-        let line1 = format!("CPU%{:.1} Temp {}", cpu_usage, cpu_temp);
-        let line2 = format!("Mem%{} Swp%{}", memory_usage, swap_usage);
+        let memory_usage = sys.used_memory() as f32 / sys.total_memory() as f32 * 100.0;
+        let swap_usage = sys.used_swap() as f32 / sys.total_swap() as f32 * 100.0;
+        let line1 = format!("CPU%{:.0} Temp {}", cpu_usage, cpu_temp);
+        let line2 = format!("Mem%{:.0} Swp%{:.0}", memory_usage, swap_usage);
         let content = format!("{};{}", line1, line2);
         print!("{}     \r", content);
         stdout().flush().expect("Couldn't flush stdout");

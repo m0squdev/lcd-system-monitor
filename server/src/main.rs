@@ -72,14 +72,7 @@ fn read_battery_and_network() -> String
     let mut batteries = battery_manager.batteries().expect("Couldn't retrieve batteries");
     let battery = batteries.next().expect("Couldn't retrieve battery").expect("This lib really likes Rust safety with expect()");
     let battery_state = battery.state().to_string();
-    let battery_state_symbols;
-    if battery_state == "charging"
-    {
-        battery_state_symbols = "` ";
-    }
-    else {
-        battery_state_symbols = "";
-    }
+    let battery_state_symbols = if battery_state == "charging" { "` " } else { "" };
     let battery_percentage = battery.state_of_charge().value * 100.0;
     let user = whoami::username();
 

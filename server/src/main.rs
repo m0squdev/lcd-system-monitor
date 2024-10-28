@@ -1,6 +1,10 @@
-use battery;
+use battery::Manager;
 use hostname;
-use serial::prelude::*;
+use serial::
+{
+    prelude::*,
+    SystemPort
+};
 use std::
 {
     env,
@@ -20,6 +24,17 @@ use sysinfo::
 };
 use whoami;
 
+fn input_dev() -> String
+{
+    let default_dev = String::from("/dev/ttyUSB0");
+    print!("Enter client device (leave blank for {}): ", default_dev);
+    stdout().flush().expect("Couldn't flush stdout");
+    let mut input = String::new();
+    stdin().read_line(&mut input).expect("Couldn't read USER input");
+    let trimmed_input = input.trim();
+    if trimmed_input == "" { default_dev } else { String::from(trimmed_input) }
+}
+
 fn get_dev() -> String
 {
     let dev;
@@ -30,19 +45,22 @@ fn get_dev() -> String
     }
     else
     {
-        let dev_prefix = String::from("/dev/tty");
-        print!("Enter client device (leave blank for /dev/ttyUSB0\n{}", dev_prefix);
-        stdout().flush().expect("Couldn't flush stdout");
-        let mut input = String::new();
-        stdin().read_line(&mut input).expect("Couldn't read user input");
-        let mut dev_suffix = input.trim();
-        if dev_suffix.is_empty()
-        {
-            dev_suffix = "USB0";
-        }
-        dev = dev_prefix + dev_suffix;  // You can use the "+" operator to concatenate a String and a str
+        dev = input_dev();
     }
     dev
+}
+
+fn reconfigure_port(port: &mut SystemPort)
+{
+    port.reconfigure(&|settings|
+    {
+        settings.set_baud_rate(serial::Baud9600).expect("Couldn't set baud rate");
+        settings.set_char_size(serial::Bits8);
+        settings.set_parity(serial::ParityNone);
+        settings.set_stop_bits(serial::Stop1);
+        settings.set_flow_control(serial::FlowNone);
+        Ok(())
+    }).expect("Couldn't configure serial connection");
 }
 
 fn read_cpu_and_memory(sys: &System, components: &Components) -> String
@@ -66,17 +84,13 @@ fn read_cpu_and_memory(sys: &System, components: &Components) -> String
     format!("{};{}", line1, line2)
 }
 
-fn read_battery_and_network(times_displayed: &u8) -> String
+fn read_battery_and_network(battery_manager: &Manager, user: &String, host: &str, times_displayed: &u8) -> String
 {
-    let battery_manager = battery::Manager::new().expect("Couldn't create instance of battery::Manager");
     let mut batteries = battery_manager.batteries().expect("Couldn't retrieve batteries");
     let battery = batteries.next().expect("Couldn't retrieve battery").expect("This lib really likes Rust safety with expect()");
     let battery_state = battery.state().to_string();
     let battery_state_symbol = if battery_state == "charging" { "`" } else { "&" };
     let battery_percentage = battery.state_of_charge().value * 100.0;
-    let user = whoami::username();
-
-    let host = hostname::get().expect("Couldn't retrieve hostname").to_string_lossy().into_owned();
 
     let line1 =
         if times_displayed % 2 == 0 && battery_percentage < 10.0
@@ -93,21 +107,16 @@ fn read_battery_and_network(times_displayed: &u8) -> String
 
 fn main()
 {
-    let dev = get_dev();
+    let mut dev = get_dev();
     let mut port = serial::open(&dev).expect("Couldn't open serial connection");
-    port.reconfigure(&|settings|
-    {
-        settings.set_baud_rate(serial::Baud9600).expect("Couldn't set baud rate");
-        settings.set_char_size(serial::Bits8);
-        settings.set_parity(serial::ParityNone);
-        settings.set_stop_bits(serial::Stop1);
-        settings.set_flow_control(serial::FlowNone);
-        Ok(())
-    }).expect("Couldn't configure serial connection");
+    reconfigure_port(&mut port);
     println!("Serial connection to {} initialized successfully.\nTransmitting info at 9600 bauds.", dev);
 
     let mut sys = System::new();
     let mut components = Components::new();
+    let battery_manager = Manager::new().expect("Couldn't create instance of battery::Manager");
+    let user = whoami::username();
+    let host = hostname::get().expect("Couldn't retrieve hostname").to_string_lossy().into_owned();
     let mut screen = true;
     let mut times_displayed: u8 = 0;
     loop
@@ -119,16 +128,45 @@ fn main()
         let content;
         if screen
         {
-            sys.refresh_all();
+            sys.refresh_cpu_all();
+            sys.refresh_memory();
             components.refresh_list();
             content = read_cpu_and_memory(&sys, &components);
         }
         else {
-            content = read_battery_and_network(&times_displayed);
+            content = read_battery_and_network(&battery_manager, &user, &host, &times_displayed);
         }
         print!("{}      \r", content);
         stdout().flush().expect("Couldn't flush stdout");
-        port.write(format!("{}\n", content).as_bytes()).expect("Couldn't write to serial");
+        match port.write(format!("{}\n", content).as_bytes())
+        {
+            Ok(_) => {}
+            Err(why) =>
+            {
+                println!("{}. Attempting to reconnect to {}...", why, dev);
+                'reconnector: loop
+                {
+                    for n in 0..5
+                    {
+                        stdout().flush().expect("Couldn't flush stdout");
+                        match serial::open(&dev)
+                        {
+                            Ok(new_port) =>
+                            {
+                                port = new_port;
+                                reconfigure_port(&mut port);
+                                println!("Attempt {}/5 succeeded: connection reestablished successfully.", n + 1);
+                                break 'reconnector;
+                            }
+                            Err(why) => print!("Attempt {}/5 failed: {}.\r", n + 1, why)
+                        }
+                        thread::sleep(Duration::from_secs(5));
+                    }
+                    println!();
+                    dev = input_dev();
+                }
+            }
+        }
         times_displayed += 1;
         thread::sleep(Duration::from_secs(1));
     }

@@ -6,16 +6,17 @@
 #define HEIGHT 2
 #define DEG_CHAR 0
 #define CHARGING_CHAR 1
+#define DISCHARGING_CHAR 2
 
 const byte degBytes[] = {
-  0b00110,
-  0b01001,
-  0b01001,
-  0b00110,
-  0b00000,
-  0b00000,
-  0b00000,
-  0b00000
+  B00110,
+  B01001,
+  B01001,
+  B00110,
+  B00000,
+  B00000,
+  B00000,
+  B00000
 };
 
 const byte chargingBytes[] = {
@@ -27,6 +28,17 @@ const byte chargingBytes[] = {
   B00100,
   B00100,
   B00100
+};
+
+const byte dischargingBytes[] = {
+  B01110,
+  B11111,
+  B10001,
+  B10001,
+  B10001,
+  B10001,
+  B10001,
+  B11111
 };
 
 LiquidCrystal_I2C lcd(ADDR, WIDTH, HEIGHT);
@@ -42,6 +54,7 @@ void write_line(String line)
       Serial.print(line[n]);
       if (line[n] == '^') lcd.write(DEG_CHAR);
       else if (line[n] == '`') lcd.write(CHARGING_CHAR);
+      else if (line[n] == '&') lcd.write(DISCHARGING_CHAR);
       else lcd.print(line[n]);
     }
   }
@@ -53,6 +66,7 @@ void setup()
   lcd.backlight();
   lcd.createChar(DEG_CHAR, degBytes);
   lcd.createChar(CHARGING_CHAR, chargingBytes);
+  lcd.createChar(DISCHARGING_CHAR, dischargingBytes);
   Serial.begin(9600);
   lcd.setCursor(0, 0);
   lcd.print("Listening to");

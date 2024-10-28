@@ -72,13 +72,13 @@ fn read_battery_and_network() -> String
     let mut batteries = battery_manager.batteries().expect("Couldn't retrieve batteries");
     let battery = batteries.next().expect("Couldn't retrieve battery").expect("This lib really likes Rust safety with expect()");
     let battery_state = battery.state().to_string();
-    let battery_state_symbols = if battery_state == "charging" { "` " } else { "" };
+    let battery_state_symbol = if battery_state == "charging" { "`" } else { "&" };
     let battery_percentage = battery.state_of_charge().value * 100.0;
     let user = whoami::username();
 
     let host = hostname::get().expect("Couldn't retrieve hostname").to_string_lossy().into_owned();
 
-    let line1 = format!("{}{:.0}% Usr:{}", battery_state_symbols, battery_percentage, user);
+    let line1 = format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user);
     let line2 = format!("{}", host);
     format!("{};{}", line1, line2)
 }

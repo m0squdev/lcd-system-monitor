@@ -66,7 +66,7 @@ fn read_cpu_and_memory(sys: &System, components: &Components) -> String
     format!("{};{}", line1, line2)
 }
 
-fn read_battery_and_network() -> String
+fn read_battery_and_network(times_displayed: &u8) -> String
 {
     let battery_manager = battery::Manager::new().expect("Couldn't create instance of battery::Manager");
     let mut batteries = battery_manager.batteries().expect("Couldn't retrieve batteries");
@@ -78,7 +78,15 @@ fn read_battery_and_network() -> String
 
     let host = hostname::get().expect("Couldn't retrieve hostname").to_string_lossy().into_owned();
 
-    let line1 = format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user);
+    let line1 =
+        if times_displayed % 2 == 0 && battery_percentage < 10.0
+        {
+            format!("{} RECHARGE NOW", battery_state_symbol)
+        }
+        else
+        {
+            format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user)
+        };
     let line2 = format!("{}", host);
     format!("{};{}", line1, line2)
 }
@@ -101,7 +109,7 @@ fn main()
     let mut sys = System::new();
     let mut components = Components::new();
     let mut screen = true;
-    let mut times_displayed = 0;
+    let mut times_displayed: u8 = 0;
     loop
     {
         if times_displayed > 4        {
@@ -116,7 +124,7 @@ fn main()
             content = read_cpu_and_memory(&sys, &components);
         }
         else {
-            content = read_battery_and_network();
+            content = read_battery_and_network(&times_displayed);
         }
         print!("{}      \r", content);
         stdout().flush().expect("Couldn't flush stdout");

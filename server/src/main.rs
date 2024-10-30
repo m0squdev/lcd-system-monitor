@@ -1,35 +1,35 @@
-use battery::Manager;
+use battery;
 use hostname;
 use serial::
 {
     prelude::*,
     SystemPort
 };
-use serialport;
+use serialport::
+{
+    self,
+    SerialPortType
+};
 use std::
 {
     env,
     io::
     {
-        stdin,
-        stdout,
+        self,
         Write
     },
+    process::exit,
     thread,
     time::Duration
 };
-use sysinfo::
-{
-    Components,
-    System
-};
+use sysinfo;
 use whoami;
 
 const CONNECTION_ATTEMPTS: u8 = 3;
 
 fn flush_stdout()
 {
-    stdout().flush().expect("Couldn't flush stdout");
+    io::stdout().flush().expect("Couldn't flush stdout");
 }
 
 fn detect_dev() -> Option<String>
@@ -42,7 +42,7 @@ fn detect_dev() -> Option<String>
         {
             for port in &ports
             {
-                if let serialport::SerialPortType::UsbPort(info) = &port.port_type
+                if let SerialPortType::UsbPort(info) = &port.port_type
                 {
                     if info.vid == 0x0403 {
                         let port_name = port.port_name.clone();
@@ -63,8 +63,10 @@ fn input_dev() -> String
     print!("Enter client device: ");
     flush_stdout();
     let mut input = String::new();
-    stdin().read_line(&mut input).expect("Couldn't read USER input");
-    String::from(input.trim())
+    io::stdin().read_line(&mut input).expect("Couldn't read user input");
+    let dev = input.trim();
+    if dev.is_empty() { exit(0) }
+    String::from(dev)
 }
 
 fn connect(dev: &String) -> Result<SystemPort, serial::Error>
@@ -108,7 +110,7 @@ fn auto_reconnect(mut dev: String) -> (String, SystemPort)
     }
 }
 
-fn read_cpu_and_memory(sys: &System, components: &Components) -> String
+fn read_cpu_and_memory(sys: &sysinfo::System, components: &sysinfo::Components) -> String
 {
     let cpu_usage = sys.global_cpu_usage();
     let mut temperatures: Vec<f32> = Vec::new();
@@ -129,7 +131,7 @@ fn read_cpu_and_memory(sys: &System, components: &Components) -> String
     format!("{};{}", line1, line2)
 }
 
-fn read_battery_and_network(battery_manager: &Manager, user: &String, host: &str, times_displayed: &u8) -> String
+fn read_battery_and_network(battery_manager: &battery::Manager, user: &String, host: &str, times_displayed: &u8) -> String
 {
     let mut batteries = battery_manager.batteries().expect("Couldn't retrieve batteries");
     let battery = batteries
@@ -170,9 +172,9 @@ fn main()
         }
     }
 
-    let mut sys = System::new();
-    let mut components = Components::new();
-    let battery_manager = Manager::new().expect("Couldn't create instance of battery::Manager");
+    let mut sys = sysinfo::System::new();
+    let mut components = sysinfo::Components::new();
+    let battery_manager = battery::Manager::new().expect("Couldn't create instance of battery::Manager");
     let user = whoami::username();
     let host = hostname::get()
         .expect("Couldn't retrieve hostname")

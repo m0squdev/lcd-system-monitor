@@ -105,6 +105,25 @@ fn read_battery_and_network(battery_manager: &Manager, user: &String, host: &str
     format!("{};{}", line1, line2)
 }
 
+fn reconnect(dev: &String) -> Option<SystemPort>
+{
+    stdout().flush().expect("Couldn't flush stdout");
+    match serial::open(&dev)
+    {
+        Ok(mut new_port) =>
+        {
+            reconfigure_port(&mut new_port);
+            println!("connection reestablished successfully.");
+            Some(new_port)
+        }
+        Err(why) =>
+        {
+            println!("{}.", why);
+            None
+        }
+    }
+}
+
 fn main()
 {
     let mut dev = get_dev();
@@ -136,35 +155,26 @@ fn main()
         else {
             content = read_battery_and_network(&battery_manager, &user, &host, &times_displayed);
         }
-        print!("{}      \r", content);
+        print!("\x1b[2K{}\r", content);
         stdout().flush().expect("Couldn't flush stdout");
         match port.write(format!("{}\n", content).as_bytes())
         {
             Ok(_) => {}
             Err(why) =>
             {
-                println!("{}. Attempting to reconnect to {}...", why, dev);
-                'reconnector: loop
+                println!("{}. Attempting to reconnect to {}.", why, dev);
+                let mut new_port = None;
+                while new_port.is_none()
                 {
-                    for n in 0..5
+                    for attempt in 1..=5
                     {
-                        stdout().flush().expect("Couldn't flush stdout");
-                        match serial::open(&dev)
-                        {
-                            Ok(new_port) =>
-                            {
-                                port = new_port;
-                                reconfigure_port(&mut port);
-                                println!("Attempt {}/5 succeeded: connection reestablished successfully.", n + 1);
-                                break 'reconnector;
-                            }
-                            Err(why) => print!("Attempt {}/5 failed: {}.\r", n + 1, why)
-                        }
+                        print!("Trying to reconnect (attempt {}/5)... ", attempt);
+                        new_port = reconnect(&dev);
                         thread::sleep(Duration::from_secs(5));
                     }
-                    println!();
                     dev = input_dev();
                 }
+                port = new_port.expect("Error while changing port");
             }
         }
         times_displayed += 1;

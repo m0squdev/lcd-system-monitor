@@ -131,7 +131,7 @@ fn read_cpu_and_memory(sys: &sysinfo::System, components: &sysinfo::Components) 
     format!("{};{}", line1, line2)
 }
 
-fn read_battery_and_network(battery_manager: &battery::Manager, user: &String, host: &str, times_displayed: &u8) -> String
+fn read_battery_and_host(battery_manager: &battery::Manager, user: &String, host: &str, times_displayed: &u8) -> String
 {
     let mut batteries = battery_manager.batteries().expect("Couldn't retrieve batteries");
     let battery = batteries
@@ -196,7 +196,7 @@ fn main()
         }
         else
         {
-            content = read_battery_and_network(&battery_manager, &user, &host, &times_displayed);
+            content = read_battery_and_host(&battery_manager, &user, &host, &times_displayed);
         }
         print!("\x1b[2K{}\r", content);
         flush_stdout();

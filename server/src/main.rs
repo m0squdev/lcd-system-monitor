@@ -17,6 +17,7 @@ use serialport::
 };
 use std::
 {
+    env,
     io::
     {
         self,
@@ -29,6 +30,7 @@ use std::
 use sysinfo;
 use whoami;
 
+const DBUS_ADDR_KEY: &str = "DBUS_SESSION_BUS_ADDRESS";
 const CONNECTION_ATTEMPTS: u8 = 3;
 
 fn flush_stdout() { io::stdout().flush().expect("Couldn't flush stdout"); }
@@ -45,7 +47,8 @@ fn detect_dev() -> Option<String>
             {
                 if let SerialPortType::UsbPort(info) = &port.port_type
                 {
-                    if info.vid == 0x0403 {
+                    if info.vid == 0x0403
+                    {
                         let port_name = port.port_name.clone();
                         println!("{} found", port_name);
                         return Some(port_name);
@@ -111,8 +114,11 @@ fn auto_reconnect(mut dev: String) -> (String, SystemPort)
     }
 }
 
-fn read_cpu_and_memory(sys: &sysinfo::System, components: &sysinfo::Components) -> String
+fn read_cpu_and_memory(sys: &mut sysinfo::System, components: &mut sysinfo::Components) -> String
 {
+    sys.refresh_cpu_all();
+    sys.refresh_memory();
+    components.refresh_list();
     let cpu_usage = sys.global_cpu_usage();
     let mut temperatures: Vec<f32> = Vec::new();
     for component in components
@@ -156,7 +162,7 @@ fn read_battery_and_host(battery_manager: &battery::Manager, user: &String, host
     format!("{};{}", line1, line2)
 }
 
-fn read_music() -> String
+fn read_music() -> Option<String>
 {
     let player_finder = mpris::PlayerFinder::new().expect("Couldn't retrieve playing music");
     if let Ok(player) = player_finder.find_active()
@@ -168,11 +174,11 @@ fn read_music() -> String
         {
             let artists = metadata.artists().unwrap_or_else(|| vec!["No artist"]);
             let title = metadata.title().unwrap_or("No title");
-            return format!("{} {};{}", playing_char, artists.join(", "), title);
+            return Some(format!("{} {};{}", playing_char, artists.join(", "), title));
         }
-        return format!("{} Unknown music;", playing_char);
+        return Some(format!("{} Unknown music;", playing_char));
     }
-    String::from("\\ Not playing;music rn")
+    None
 }
 
 fn main()
@@ -198,11 +204,16 @@ fn main()
         .to_string_lossy()
         .into_owned();
 
+    if let Ok(_) = env::var(DBUS_ADDR_KEY).map(|addr| addr.contains("unix:abstract"))
+    {
+        env::set_var(DBUS_ADDR_KEY, "unix:path=/run/user/1000/bus");
+    }
+
     let mut screen = 0;
     let mut times_displayed: u8 = 0;
     loop
     {
-        if times_displayed > 4
+        if times_displayed > 5
         {
             screen += 1;
             if screen > 2 { screen = 0; }
@@ -211,19 +222,21 @@ fn main()
         let content;
         match screen
         {
-            0 =>
-            {
-                sys.refresh_cpu_all();
-                sys.refresh_memory();
-                components.refresh_list();
-                content = read_cpu_and_memory(&sys, &components);
-            }
+            0 => content = read_cpu_and_memory(&mut sys, &mut components),
             1 => content = read_battery_and_host(&battery_manager, &user, &host, &times_displayed),
-            2 => content = read_music(),
-            _ =>
+            2 =>
             {
-                panic!("No matching screen");
-            }
+                match read_music()
+                {
+                    Some(music_content) => content = music_content,
+                    None =>
+                    {
+                        screen = 0;
+                        content = read_cpu_and_memory(&mut sys, &mut components);
+                    }
+                }
+            },
+            _ => panic!("No matching screen")
         }
         print!("\x1b[2K{}\r", content);
         flush_stdout();

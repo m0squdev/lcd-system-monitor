@@ -9,7 +9,6 @@
 #define DISCHARGING_CHAR 2
 #define PLAYING_CHAR 3
 #define PAUSED_CHAR 4
-#define NO_MUSIC_CHAR 5
 
 const byte degBytes[] = {
   B00110,
@@ -66,17 +65,6 @@ const byte pausedBytes[] = {
   B10000
 };
 
-const byte noMusicChar[] = {
-  B00110,
-  B00111,
-  B00101,
-  B00101,
-  B00100,
-  B01100,
-  B11100,
-  B01000
-};
-
 LiquidCrystal_I2C lcd(ADDR, WIDTH, HEIGHT);
 
 void write_line(String line)
@@ -103,9 +91,6 @@ void write_line(String line)
       case '$':
         lcd.write(PAUSED_CHAR);
         break;
-      case '\\':
-        lcd.write(NO_MUSIC_CHAR);
-        break;
       default:
         lcd.print(line[n]);
       }
@@ -122,7 +107,6 @@ void setup()
   lcd.createChar(DISCHARGING_CHAR, dischargingBytes);
   lcd.createChar(PLAYING_CHAR, playingBytes);
   lcd.createChar(PAUSED_CHAR, pausedBytes);
-  lcd.createChar(NO_MUSIC_CHAR, noMusicChar);
   Serial.begin(9600);
   lcd.setCursor(0, 0);
   lcd.print("Listening to");

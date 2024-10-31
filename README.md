@@ -43,10 +43,10 @@ A real-time system monitoring solution that displays system metrics, battery sta
    ```bash
    cargo run --release
    ```
-4. The server should automatically detect the client device. If not, you will be prompted.
+4. The server should automatically detect the client device. If not, you will be prompted to insert it.
 
 ### Server Autostart (Optional)
-Move [`./lcd-system-monitor.desktop`](https://github.com/m0squdev/lcd-system-monitor/blob/main/lcd-system-monitor.desktop) to `~/.config/autostart` to make the program start automatically with your GNOME session.
+Copy [`./lcd-system-monitor.desktop`](https://github.com/m0squdev/lcd-system-monitor/blob/main/lcd-system-monitor.desktop) to `~/.config/autostart` to make the program start automatically with your GNOME session.
 
 ## Dependencies
 

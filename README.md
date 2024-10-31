@@ -37,13 +37,14 @@ A real-time system monitoring solution that displays system metrics, battery sta
 3. Upload [`./client/client.ino`](https://github.com/m0squdev/lcd-system-monitor/blob/main/client/client.ino) to your Arduino board
 
 ### Rust Server Setup
-1. Connect the Arduino to your computer
-2. Navigate to `./server` directory
-3. Run the server application:
+1. Install `playerctl` command-line utility
+2. Connect the Arduino to your computer
+3. Navigate to `./server` directory
+4. Run the server application:
    ```bash
    cargo run --release
    ```
-4. The server should automatically detect the client device. If not, you will be prompted to insert it.
+5. The server should automatically detect the client device. If not, you will be prompted to insert it.
 
 ### Server Autostart (Optional)
 Copy [`./lcd-system-monitor.desktop`](https://github.com/m0squdev/lcd-system-monitor/blob/main/lcd-system-monitor.desktop) to `~/.config/autostart` to make the program start automatically with your GNOME session.

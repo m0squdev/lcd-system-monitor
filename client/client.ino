@@ -7,6 +7,9 @@
 #define DEG_CHAR 0
 #define CHARGING_CHAR 1
 #define DISCHARGING_CHAR 2
+#define PLAYING_CHAR 3
+#define PAUSED_CHAR 4
+#define NO_MUSIC_CHAR 5
 
 const byte degBytes[] = {
   B00110,
@@ -41,6 +44,39 @@ const byte dischargingBytes[] = {
   B11111
 };
 
+const byte playingBytes[] = {
+  B00000,
+  B11011,
+  B11011,
+  B11011,
+  B11011,
+  B11011,
+  B11011,
+  B00000
+};
+
+const byte pausedBytes[] = {
+  B10000,
+  B11000,
+  B11100,
+  B11110,
+  B11110,
+  B11100,
+  B11000,
+  B10000
+};
+
+const byte noMusicChar[] = {
+  B00110,
+  B00111,
+  B00101,
+  B00101,
+  B00100,
+  B01100,
+  B11100,
+  B01000
+};
+
 LiquidCrystal_I2C lcd(ADDR, WIDTH, HEIGHT);
 
 void write_line(String line)
@@ -50,12 +86,29 @@ void write_line(String line)
     if (n >= line.length()) lcd.print(" ");
     else
     {
-      Serial.print(n);
-      Serial.print(line[n]);
-      if (line[n] == '^') lcd.write(DEG_CHAR);
-      else if (line[n] == '`') lcd.write(CHARGING_CHAR);
-      else if (line[n] == '&') lcd.write(DISCHARGING_CHAR);
-      else lcd.print(line[n]);
+      switch (line[n])
+      {
+      case '^':
+        lcd.write(DEG_CHAR);
+        break;
+      case '`':
+        lcd.write(CHARGING_CHAR);
+        break;
+      case '&':
+        lcd.write(DISCHARGING_CHAR);
+        break;
+      case '#':
+        lcd.write(PLAYING_CHAR);
+        break;
+      case '$':
+        lcd.write(PAUSED_CHAR);
+        break;
+      case '\\':
+        lcd.write(NO_MUSIC_CHAR);
+        break;
+      default:
+        lcd.print(line[n]);
+      }
     }
   }
 }
@@ -67,6 +120,9 @@ void setup()
   lcd.createChar(DEG_CHAR, degBytes);
   lcd.createChar(CHARGING_CHAR, chargingBytes);
   lcd.createChar(DISCHARGING_CHAR, dischargingBytes);
+  lcd.createChar(PLAYING_CHAR, playingBytes);
+  lcd.createChar(PAUSED_CHAR, pausedBytes);
+  lcd.createChar(NO_MUSIC_CHAR, noMusicChar);
   Serial.begin(9600);
   lcd.setCursor(0, 0);
   lcd.print("Listening to");
@@ -79,7 +135,6 @@ void loop()
   if (Serial.available())
   {
     String data = Serial.readStringUntil('\n');
-    Serial.println(data);
     int separatorIndex = data.indexOf(';');
 
     String line1 = data.substring(0, separatorIndex);

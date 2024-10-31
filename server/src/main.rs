@@ -1,5 +1,10 @@
 use battery;
 use hostname;
+use mpris::
+{
+    self,
+    PlaybackStatus
+};
 use serial::
 {
     prelude::*,
@@ -12,7 +17,6 @@ use serialport::
 };
 use std::
 {
-    env,
     io::
     {
         self,
@@ -27,10 +31,7 @@ use whoami;
 
 const CONNECTION_ATTEMPTS: u8 = 3;
 
-fn flush_stdout()
-{
-    io::stdout().flush().expect("Couldn't flush stdout");
-}
+fn flush_stdout() { io::stdout().flush().expect("Couldn't flush stdout"); }
 
 fn detect_dev() -> Option<String>
 {
@@ -155,6 +156,25 @@ fn read_battery_and_host(battery_manager: &battery::Manager, user: &String, host
     format!("{};{}", line1, line2)
 }
 
+fn read_music() -> String
+{
+    let player_finder = mpris::PlayerFinder::new().expect("Couldn't retrieve playing music");
+    if let Ok(player) = player_finder.find_active()
+    {
+        let playing_char =
+            if let Ok(PlaybackStatus::Playing) = player.get_playback_status() { "#" }
+            else { "$" };
+        if let Ok(metadata) = player.get_metadata()
+        {
+            let artists = metadata.artists().unwrap_or_else(|| vec!["No artist"]);
+            let title = metadata.title().unwrap_or("No title");
+            return format!("{} {};{}", playing_char, artists.join(", "), title);
+        }
+        return format!("{} Unknown music;", playing_char);
+    }
+    String::from("\\ Not playing;music rn")
+}
+
 fn main()
 {
     let mut dev = detect_dev().unwrap_or_else(|| input_dev());
@@ -177,26 +197,33 @@ fn main()
         .expect("Couldn't retrieve hostname")
         .to_string_lossy()
         .into_owned();
-    let mut sys_monitor_screen = true;
+
+    let mut screen = 0;
     let mut times_displayed: u8 = 0;
     loop
     {
         if times_displayed > 4
         {
-            sys_monitor_screen = !sys_monitor_screen;
+            screen += 1;
+            if screen > 2 { screen = 0; }
             times_displayed = 0;
         }
         let content;
-        if sys_monitor_screen
+        match screen
         {
-            sys.refresh_cpu_all();
-            sys.refresh_memory();
-            components.refresh_list();
-            content = read_cpu_and_memory(&sys, &components);
-        }
-        else
-        {
-            content = read_battery_and_host(&battery_manager, &user, &host, &times_displayed);
+            0 =>
+            {
+                sys.refresh_cpu_all();
+                sys.refresh_memory();
+                components.refresh_list();
+                content = read_cpu_and_memory(&sys, &components);
+            }
+            1 => content = read_battery_and_host(&battery_manager, &user, &host, &times_displayed),
+            2 => content = read_music(),
+            _ =>
+            {
+                panic!("No matching screen");
+            }
         }
         print!("\x1b[2K{}\r", content);
         flush_stdout();

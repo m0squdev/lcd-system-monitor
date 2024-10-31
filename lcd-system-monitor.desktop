@@ -1,5 +1,5 @@
 [Desktop Entry]
-Exec=/bin/bash -c "cd /home/valer/Desktop/PWUE/Arduino/lcd-system-monitor/server && /usr/bin/cargo run --release"
+Exec=dbus-run-session -- /bin/bash -c "cd /home/valer/Desktop/PWUE/Arduino/lcd-system-monitor/server && /usr/bin/cargo run --release"
 Name=LCD System Monitor
 Type=Application
 StartupNotify=true

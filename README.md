@@ -7,7 +7,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
 ### Hardware Requirements
 - Arduino board (or compatible microcontroller)
 - I2C LCD Display (16x2 characters)
-- USB-to-Serial connection
+- USB connection to your PC
 
 ### Program Components
 - Arduino client program (`./client`)
@@ -25,18 +25,16 @@ A real-time system monitoring solution that displays system metrics, battery sta
 - System information:
   - Current username
   - System hostname
-- Automatic display alternation between system metrics and system info
 - 1-second refresh rate
-- 16x2 LCD display output
 - Serial communication at 9600 baud
-- Configurable server-side serial port selection
+- Automatic serial port detection and reconnection
 
 ## Installation
 
 ### Arduino Client Setup
 1. Connect the I2C LCD display to your Arduino
 2. Install required [Arduino libraries](#arduino)
-3. Upload `./client/client.ino` to your Arduino board
+3. Upload [`./client/client.ino`](https://github.com/m0squdev/lcd-system-monitor/blob/main/client/client.ino) to your Arduino board
 
 ### Rust Server Setup
 1. Connect the Arduino to your computer
@@ -45,21 +43,21 @@ A real-time system monitoring solution that displays system metrics, battery sta
    ```bash
    cargo run --release
    ```
-4. When prompted, enter your serial device name:
-   - Press Enter for default (`/dev/ttyUSB0`)
-   - Or enter the specific device suffix (e.g., `ACM0` for `/dev/ttyACM0`)
+4. The server should automatically detect the client device. If not, you will be prompted.
 
-You can also run `cargo run --release <device>` to avoid being prompted and create a connection to the specified device.
+### Server Autostart (Optional)
+Move [`./lcd-system-monitor.desktop`](https://github.com/m0squdev/lcd-system-monitor/blob/main/lcd-system-monitor.desktop) to `~/.config/autostart` to make the program start automatically with your GNOME session.
 
 ## Dependencies
 
-### Rust
-- `battery` (0.7.8): Battery status monitoring
-- `hostname`: (0.4.0) System hostname retrieval
-- `serial` (0.4.0): Serial port communication
-- `sysinfo` (0.32.0): System information collection
-- `whoami`: (1.5.2) Username retrieval
-
 ### Arduino
-- `Wire`: I2C communication
-- `LiquidCrystal_I2C`: LCD control
+- `Wire` (built-in)
+- [`LiquidCrystal_I2C`](https://github.com/johnrickman/LiquidCrystal_I2C) (1.1.2)
+
+### Rust
+- `battery` (0.7.8)
+- `hostname` (0.4.0)
+- `serial` (0.4.0)
+- `serialport` (4.6.0)
+- `sysinfo` (0.32.0)
+- `whoami` (1.5.2)

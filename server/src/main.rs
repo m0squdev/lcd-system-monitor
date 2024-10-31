@@ -157,10 +157,7 @@ fn read_battery_and_network(battery_manager: &battery::Manager, user: &String, h
 
 fn main()
 {
-    let mut dev = env::args()
-        .nth(1)
-        .or_else(|| detect_dev())
-        .unwrap_or_else(|| input_dev());
+    let mut dev = detect_dev().unwrap_or_else(|| input_dev());
     let mut port;
     match connect(&dev)
     {

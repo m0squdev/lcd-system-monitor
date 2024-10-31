@@ -50,7 +50,8 @@ A real-time system monitoring solution that displays system metrics, battery sta
 4. The server should automatically detect the client device. If not, you will be prompted to insert it.
 
 ### Server Autostart (Optional)
-Copy [`./lcd-system-monitor.desktop`](https://github.com/m0squdev/lcd-system-monitor/blob/main/lcd-system-monitor.desktop) to `~/.config/autostart` to make the program start automatically with your GNOME session.
+Execute [`./autostart.sh`](https://github.com/m0squdev/lcd-system-monitor/blob/main/autostart.sh) to make the program start automatically with your GNOME session.
+The program will create the file `~/.config/autostart/lcd-system-monitor.desktop`.
 
 ## Dependencies
 

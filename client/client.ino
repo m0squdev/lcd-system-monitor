@@ -9,8 +9,10 @@
 #define DISCHARGING_CHAR 2
 #define PLAYING_CHAR 3
 #define PAUSED_CHAR 4
+#define ELLIPSIS_CHAR 5
 
-const byte degBytes[] = {
+const byte degBytes[] =
+{
   B00110,
   B01001,
   B01001,
@@ -21,7 +23,8 @@ const byte degBytes[] = {
   B00000
 };
 
-const byte chargingBytes[] = {
+const byte chargingBytes[] =
+{
   B01010,
   B01010,
   B11111,
@@ -32,7 +35,8 @@ const byte chargingBytes[] = {
   B00100
 };
 
-const byte dischargingBytes[] = {
+const byte dischargingBytes[] =
+{
   B01110,
   B11111,
   B10001,
@@ -43,7 +47,8 @@ const byte dischargingBytes[] = {
   B11111
 };
 
-const byte playingBytes[] = {
+const byte playingBytes[] =
+{
   B00000,
   B11011,
   B11011,
@@ -54,7 +59,8 @@ const byte playingBytes[] = {
   B00000
 };
 
-const byte pausedBytes[] = {
+const byte pausedBytes[] =
+{
   B10000,
   B11000,
   B11100,
@@ -65,6 +71,18 @@ const byte pausedBytes[] = {
   B10000
 };
 
+const byte ellipsisBytes[] =
+{
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B10101,
+  B00000
+};
+
 LiquidCrystal_I2C lcd(ADDR, WIDTH, HEIGHT);
 
 void write_line(String line)
@@ -72,6 +90,11 @@ void write_line(String line)
   for (short n = 0; n < WIDTH; n++)
   {
     if (n >= line.length()) lcd.print(" ");
+    else if (n == WIDTH - 1 && n + 1 < line.length())
+    {
+      lcd.write(ELLIPSIS_CHAR);
+      return;
+    }
     else
     {
       switch (line[n])
@@ -107,11 +130,13 @@ void setup()
   lcd.createChar(DISCHARGING_CHAR, dischargingBytes);
   lcd.createChar(PLAYING_CHAR, playingBytes);
   lcd.createChar(PAUSED_CHAR, pausedBytes);
+  lcd.createChar(ELLIPSIS_CHAR, ellipsisBytes);
   Serial.begin(9600);
   lcd.setCursor(0, 0);
-  lcd.print("Listening to");
+  lcd.print("Listening");
   lcd.setCursor(0, 1);
-  lcd.print("serial...");
+  lcd.print("to serial");
+  lcd.write(ELLIPSIS_CHAR);
 }
 
 void loop()

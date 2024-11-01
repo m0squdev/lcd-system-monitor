@@ -172,8 +172,11 @@ fn read_music() -> Option<String>
             else { "$" };
         if let Ok(metadata) = player.get_metadata()
         {
-            let artists = metadata.artists().unwrap_or_else(|| vec!["No artist"]);
-            let title = metadata.title().unwrap_or("No title");
+            let artists = metadata
+                .artists()
+                .filter(|artist| !artist.is_empty())
+                .unwrap_or_else(|| vec!["Unknown artist"]);
+            let title = metadata.title().unwrap_or("Unknown title");
             return Some(format!("{} {};{}", playing_char, artists.join(", "), title));
         }
         return Some(format!("{} Unknown music;", playing_char));

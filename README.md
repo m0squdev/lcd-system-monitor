@@ -26,7 +26,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
   - Current username
   - System hostname
 - Now playing music information:
-  - Played/paused
+  - Playing/paused
   - Author
   - Song title
 - 1-second refresh rate

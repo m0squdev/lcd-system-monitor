@@ -29,8 +29,9 @@ use std::
 use sysinfo;
 use whoami;
 
-const DBUS_ADDR_KEY: &str = "DBUS_SESSION_BUS_ADDRESS";
 const CONNECTION_ATTEMPTS: u8 = 3;
+const DBUS_ADDR_KEY: &str = "DBUS_SESSION_BUS_ADDRESS";
+const CONNECTION_SLEEP: Duration = Duration::from_secs(5);
 
 fn flush_stdout() { io::stdout().flush().expect("Couldn't flush stdout"); }
 
@@ -60,6 +61,7 @@ fn detect_dev() -> String
             Err(why) => eprintln!("Couldn't retrieve ports: {}", why)
         }
         println!("failed");
+        thread::sleep(CONNECTION_SLEEP);
     }
 }
 
@@ -91,31 +93,6 @@ fn connect(dev: &String) -> Result<SystemPort, serial::Error>
 
 fn auto_reconnect(mut dev: String) -> (String, SystemPort)
 {
-    /*if env::args().nth(1).is_some()
-    {
-        loop
-        {
-            for attempt in 1..=CONNECTION_ATTEMPTS
-            {
-                print!("Attempt {}/{}... ", attempt, CONNECTION_ATTEMPTS);
-                flush_stdout();
-                if let Ok(port) = connect(&dev) { return (dev, port); }
-                thread::sleep(Duration::from_secs(5));
-            }
-            dev = detect_dev();
-        }
-    }
-    else
-    {
-        let attempt = 1;
-        loop
-        {
-            print!("Attempt {}... ", attempt);
-            flush_stdout();
-            if let Ok(port) = connect(&dev) { return (dev, port); }
-            thread::sleep(Duration::from_secs(5));
-        }
-    }*/
     let finite_attempts = env::args().nth(1).is_none();
     let mut attempt = 1;
     loop
@@ -127,7 +104,7 @@ fn auto_reconnect(mut dev: String) -> (String, SystemPort)
         );
         flush_stdout();
         if let Ok(port) = connect(&dev) { return (dev, port) }
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(CONNECTION_SLEEP);
         if finite_attempts && attempt >= CONNECTION_ATTEMPTS
         {
             dev = detect_dev();

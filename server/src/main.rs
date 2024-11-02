@@ -23,7 +23,6 @@ use std::
         self,
         Write
     },
-    process::exit,
     thread,
     time::Duration
 };
@@ -35,42 +34,33 @@ const CONNECTION_ATTEMPTS: u8 = 3;
 
 fn flush_stdout() { io::stdout().flush().expect("Couldn't flush stdout"); }
 
-fn detect_dev() -> Option<String>
+fn detect_dev() -> String
 {
-    print!("Trying to detect device... ");
-    flush_stdout();
-    match serialport::available_ports()
+    loop
     {
-        Ok(ports) =>
+        print!("Trying to detect device... ");
+        flush_stdout();
+        match serialport::available_ports()
         {
-            for port in &ports
+            Ok(ports) =>
             {
-                if let SerialPortType::UsbPort(info) = &port.port_type
+                for port in &ports
                 {
-                    if info.vid == 0x0403
+                    if let SerialPortType::UsbPort(info) = &port.port_type
                     {
-                        let port_name = port.port_name.clone();
-                        println!("{} found", port_name);
-                        return Some(port_name);
+                        if info.vid == 0x0403
+                        {
+                            let port_name = port.port_name.clone();
+                            println!("{} found", port_name);
+                            return port_name;
+                        }
                     }
                 }
             }
+            Err(why) => eprintln!("Couldn't retrieve ports: {}", why)
         }
-        Err(why) => eprintln!("Couldn't retrieve ports: {}", why)
+        println!("failed");
     }
-    println!("failed");
-    None
-}
-
-fn input_dev() -> String
-{
-    print!("Enter client device: ");
-    flush_stdout();
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).expect("Couldn't read user input");
-    let dev = input.trim();
-    if dev.is_empty() { exit(0) }
-    String::from(dev)
 }
 
 fn connect(dev: &String) -> Result<SystemPort, serial::Error>
@@ -101,16 +91,49 @@ fn connect(dev: &String) -> Result<SystemPort, serial::Error>
 
 fn auto_reconnect(mut dev: String) -> (String, SystemPort)
 {
-    loop
+    /*if env::args().nth(1).is_some()
     {
-        for attempt in 1..=CONNECTION_ATTEMPTS
+        loop
         {
-            print!("Attempt {}/{}... ", attempt, CONNECTION_ATTEMPTS);
+            for attempt in 1..=CONNECTION_ATTEMPTS
+            {
+                print!("Attempt {}/{}... ", attempt, CONNECTION_ATTEMPTS);
+                flush_stdout();
+                if let Ok(port) = connect(&dev) { return (dev, port); }
+                thread::sleep(Duration::from_secs(5));
+            }
+            dev = detect_dev();
+        }
+    }
+    else
+    {
+        let attempt = 1;
+        loop
+        {
+            print!("Attempt {}... ", attempt);
             flush_stdout();
             if let Ok(port) = connect(&dev) { return (dev, port); }
             thread::sleep(Duration::from_secs(5));
         }
-        dev = detect_dev().unwrap_or_else(|| input_dev());
+    }*/
+    let finite_attempts = env::args().nth(1).is_none();
+    let mut attempt = 1;
+    loop
+    {
+        print!("Attempt {}/{}... ",
+               attempt,
+               if finite_attempts { CONNECTION_ATTEMPTS.to_string() }
+               else { String::from("infinite") }
+        );
+        flush_stdout();
+        if let Ok(port) = connect(&dev) { return (dev, port) }
+        thread::sleep(Duration::from_secs(5));
+        if finite_attempts && attempt >= CONNECTION_ATTEMPTS
+        {
+            dev = detect_dev();
+            attempt = 0;
+        }
+        attempt += 1;
     }
 }
 
@@ -186,7 +209,7 @@ fn read_music() -> Option<String>
 
 fn main()
 {
-    let mut dev = detect_dev().unwrap_or_else(|| input_dev());
+    let mut dev = env::args().nth(1).unwrap_or_else(|| detect_dev());
     let mut port;
     match connect(&dev)
     {

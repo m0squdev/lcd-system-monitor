@@ -149,11 +149,12 @@ void loop()
     String line1 = data.substring(0, separatorIndex);
     lcd.setCursor(0, 0);
     write_line(line1);
-
     String line2 = data.substring(separatorIndex + 1);
     lcd.setCursor(0, 1);
     write_line(line2);
 
-    delay(1000);
+    /* It's better for this delay to be smaller than the delay of the server
+       since you have to consider the time it takes to print to the LCD */
+    delay(900);
   }
 }

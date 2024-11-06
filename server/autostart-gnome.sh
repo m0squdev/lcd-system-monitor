@@ -2,7 +2,7 @@
 
 content=$(cat << EOF
 [Desktop Entry]
-Exec=dbus-run-session -- /bin/bash -c "cd $(pwd)/server && /usr/bin/cargo run --release"
+Exec=dbus-run-session -- bash -c "cd $(pwd) && cargo run --release"
 Name=LCD System Monitor
 Type=Application
 StartupNotify=true

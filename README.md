@@ -10,8 +10,8 @@ A real-time system monitoring solution that displays system metrics, battery sta
 - USB connection to your PC
 
 ### Program Components
-- Arduino client program (`./client`)
-- Rust server application (`./server`)
+- Arduino client program (./client)
+- Rust server application (./server)
 
 ## Features
 - Real-time monitoring of system metrics:
@@ -38,26 +38,25 @@ A real-time system monitoring solution that displays system metrics, battery sta
 ### Arduino Client Setup
 1. Connect the I2C LCD display to your Arduino
 2. Install required [Arduino libraries](#arduino)
-3. Upload [`./client/client.ino`](https://github.com/m0squdev/lcd-system-monitor/blob/main/client/client.ino) to your Arduino board
+3. Upload [client/client.ino](https://github.com/m0squdev/lcd-system-monitor/blob/main/client/client.ino) to your Arduino board
 
 ### Rust Server Setup
 1. Connect the Arduino to your computer
-2. Navigate to `./server` directory
-3. Run the server application:
+2. Navigate to server directory
+3. Run the server application with Cargo:
    ```bash
    cargo run --release
    ```
+   or alternatively build the application with `cargo build --release` and execute the newly generated file server/target/release/server
 4. The server should automatically detect the client device. If not, you will be prompted to insert it.
 
 ### Server Autostart (Optional)
 
 #### With systemd (Recommended)
-1. Navigate to the root directory of the repository
-2. Execute [`./autostart-systemd.sh`](https://github.com/m0squdev/lcd-system-monitor/blob/main/autostart-systemd.sh) to make the program start automatically on login
+Execute [`server/autostart-systemd.sh`](https://github.com/m0squdev/lcd-system-monitor/blob/main/autostart-systemd.sh) to make the program start automatically on login
 
 #### With GNOME (Not Recommended)
-1. Navigate to the root directory of the repository
-2. Execute [`./autostart-gnome.sh`](https://github.com/m0squdev/lcd-system-monitor/blob/main/autostart-gnome.sh) to make the program start automatically with your GNOME session
+Execute [`server/autostart-gnome.sh`](https://github.com/m0squdev/lcd-system-monitor/blob/main/autostart-gnome.sh) to make the program start automatically with your GNOME session
 
 ## Dependencies
 

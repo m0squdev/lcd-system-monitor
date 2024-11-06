@@ -5,15 +5,11 @@ content=$(cat << EOF
 Description=LCD System Monitor
 
 [Service]
-#User=<user e.g. root>
-WorkingDirectory=$(pwd)/server
+WorkingDirectory=$(pwd)
 ExecStart=cargo run --release
-# optional items below
-#Restart=always
-#RestartSec=3
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
 EOF
 )
 systemd_dir="$HOME/.config/systemd"

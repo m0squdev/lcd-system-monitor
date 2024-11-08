@@ -197,7 +197,7 @@ fn read_music() -> Option<String>
             let title = metadata.title().unwrap_or("Unknown title");
             return Some(format!("{} {};{}", playing_char, artists.join(", "), title));
         }
-        return Some(format!("{} Unknown music;", playing_char));
+        return Some(format!("{} No music data;", playing_char));
     }
     None
 }

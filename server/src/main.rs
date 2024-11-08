@@ -41,6 +41,7 @@ fn detect_dev() -> String
     {
         print!("Trying to detect device... ");
         flush_stdout();
+        let mut first_non_arduino = None;
         match serialport::available_ports()
         {
             Ok(ports) =>
@@ -49,16 +50,25 @@ fn detect_dev() -> String
                 {
                     if let SerialPortType::UsbPort(info) = &port.port_type
                     {
-                        if info.vid == 0x0403
+                        if info.vid == 0x0403  // Prefer ports with the Arduino vendor ID
                         {
                             let port_name = port.port_name.clone();
                             println!("{} found", port_name);
                             return port_name;
                         }
+                        else if first_non_arduino == None
+                        {
+                            first_non_arduino = Some(port.port_name.clone());
+                        }
                     }
                 }
             }
             Err(why) => eprintln!("Couldn't retrieve ports: {}", why)
+        }
+        if let Some(first_port_name) = first_non_arduino
+        {
+            println!("{} found", first_port_name);
+            return first_port_name;
         }
         println!("failed");
         thread::sleep(CONNECTION_SLEEP);

@@ -48,7 +48,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
    cargo run --release
    ```
    or alternatively build the application with `cargo build --release` and execute the newly generated file server/target/release/server
-4. The server should automatically detect the client device. If you want to bind the program to a known device specify it as an argument (also works with `cargo run --release`). Nevertheless, I don't recommend to do it on Linux as the Arduino might get bound onto another device when it is connected a second time.
+4. The server will try to automatically detect the client device. It will connect to the first device found that has the Arduino vendor ID (0x0403). If none are found, it will connect to the first USB device found. If you want to bind the program to a known device specify it as an argument (also works with `cargo run --release`). Nevertheless, I don't recommend to do it on Linux as the Arduino might get bound onto another device when it is connected a second time.
 
 ### Server Autostart (Optional)
 

@@ -56,7 +56,7 @@ fn detect_dev() -> String
                             println!("{} found", port_name);
                             return port_name;
                         }
-                        else if first_non_arduino == None
+                        if first_non_arduino == None
                         {
                             first_non_arduino = Some(port.port_name.clone());
                         }

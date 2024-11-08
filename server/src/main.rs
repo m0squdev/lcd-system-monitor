@@ -90,7 +90,8 @@ fn connect(dev: &String) -> Result<SystemPort, serial::Error>
                 settings.set_flow_control(serial::FlowNone);
                 Ok(())
             }).expect("Couldn't configure serial connection");
-            println!("Serial connection to {} initialized successfully.\nTransmitting info at 9600 bauds.", dev);
+            println!("Serial connection to {} initialized successfully.\n\
+                Transmitting info at 9600 bauds.", dev);
             Ok(port)
         }
         Err(why) =>
@@ -148,9 +149,15 @@ fn read_cpu_and_memory(sys: &mut sysinfo::System, components: &mut sysinfo::Comp
     format!("{};{}", line1, line2)
 }
 
-fn read_battery_and_host(battery_manager: &battery::Manager, user: &String, host: &str, times_displayed: &u8) -> String
+fn read_battery_and_host(
+    battery_manager: &battery::Manager,
+    user: &String,
+    host: &str,
+    times_displayed: &u8
+) -> String
 {
-    let mut batteries = battery_manager.batteries().expect("Couldn't retrieve batteries");
+    let mut batteries = battery_manager.batteries()
+        .expect("Couldn't retrieve batteries");
     let battery = batteries
         .next()
         .expect("Couldn't retrieve battery")
@@ -174,7 +181,8 @@ fn read_battery_and_host(battery_manager: &battery::Manager, user: &String, host
 
 fn read_music() -> Option<String>
 {
-    let player_finder = mpris::PlayerFinder::new().expect("Couldn't retrieve playing music");
+    let player_finder = mpris::PlayerFinder::new()
+        .expect("Couldn't retrieve playing music");
     if let Ok(player) = player_finder.find_active()
     {
         let playing_char =
@@ -210,7 +218,8 @@ fn main()
 
     let mut sys = sysinfo::System::new();
     let mut components = sysinfo::Components::new();
-    let battery_manager = battery::Manager::new().expect("Couldn't create instance of battery::Manager");
+    let battery_manager = battery::Manager::new()
+        .expect("Couldn't create instance of battery::Manager");
     let user = whoami::username();
     let host = hostname::get()
         .expect("Couldn't retrieve hostname")

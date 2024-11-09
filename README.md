@@ -38,7 +38,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
 ### Arduino Client Setup
 1. Connect the I2C LCD display to your Arduino
 2. Install required [Arduino libraries](#arduino)
-3. Upload [client/client.ino](https://github.com/m0squdev/lcd-system-monitor/blob/main/client/client.ino) to your Arduino board. You can do so by running `make port=<port> board=<board>` in the client directory.
+3. Upload [client/client.ino](https://github.com/m0squdev/lcd-system-monitor/blob/main/client/client.ino) to your Arduino board. If arduino-cli is installed and set up, you can do so by running `make port=<port> board=<board>` in the client directory.
 
 ### Rust Server Setup
 1. Connect the Arduino to your computer

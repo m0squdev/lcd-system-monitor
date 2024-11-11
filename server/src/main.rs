@@ -162,12 +162,13 @@ fn read_battery_and_host(
         .next()
         .expect("Couldn't retrieve battery")
         .expect("This lib really likes Rust safety with expect()");
-    let battery_state = battery.state().to_string();
-    let battery_state_symbol = if battery_state == "charging" { "`" } else { "&" };
+    let battery_state_symbol =
+        if battery.state().to_string() == "charging" { "`" }
+        else { "&" };
     let battery_percentage = battery.state_of_charge().value * 100.0;
 
     let line1 =
-        if times_displayed % 2 == 0 && battery_percentage < 10.0
+        if times_displayed % 2 == 0 && battery_percentage < 10.0 && battery_state_symbol == "&"
         {
             format!("{} RECHARGE NOW", battery_state_symbol)
         }

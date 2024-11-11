@@ -170,7 +170,7 @@ fn read_battery_and_host(
     let line1 =
         if times_displayed % 2 == 0 && battery_percentage < 10.0 && battery_state_symbol == "&"
         {
-            format!("{} RECHARGE NOW", battery_state_symbol)
+            String::from("& RECHARGE NOW")
         }
         else
         {
@@ -193,10 +193,15 @@ fn read_music() -> Option<String>
         {
             let artists = metadata
                 .artists()
-                .filter(|artist| !artist.is_empty())
-                .unwrap_or(vec!["Unknown artist"]);
-            let title = metadata.title().unwrap_or("Unknown title");
-            return Some(format!("{} {};{}", playing_char, artists.join(", "), title));
+                .unwrap_or(vec!["Artist: error!"])
+                .join(", ");
+            let title = metadata.title().unwrap_or("Title: error!");
+            return Some(format!(
+                "{} {};{}",
+                playing_char,
+                if artists.is_empty() { String::from("Unknown artist") } else { artists },
+                title
+            ));
         }
         return Some(format!("{} No music data;", playing_char));
     }

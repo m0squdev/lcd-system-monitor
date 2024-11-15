@@ -1,5 +1,4 @@
 use battery;
-use hostname;
 use mpris::
 {
     self,
@@ -30,6 +29,7 @@ use sysinfo;
 use whoami;
 
 const CONNECTION_ATTEMPTS: u8 = 3;
+const MAX_TIMES_DISPLAYED: u8 = 5;
 const DBUS_ADDR_KEY: &str = "DBUS_SESSION_BUS_ADDRESS";
 const CONNECTION_SLEEP: Duration = Duration::from_secs(5);
 
@@ -149,19 +149,20 @@ fn read_cpu_and_memory(sys: &mut sysinfo::System, components: &mut sysinfo::Comp
     format!("{};{}", line1, line2)
 }
 
-fn read_battery_and_host(
+fn read_battery_and_network(
     battery_manager: &battery::Manager,
     user: &String,
-    host: &str,
+    networks: &mut sysinfo::Networks,
     times_displayed: &u8
 ) -> String
 {
+    networks.refresh();
     let mut batteries = battery_manager.batteries()
         .expect("Couldn't retrieve batteries");
     let battery = batteries
         .next()
         .expect("Couldn't retrieve battery")
-        .expect("This lib really likes Rust safety with expect()");
+        .expect("Couldn't retrieve battery information");
     let battery_state_symbol =
         if battery.state().to_string() == "charging" { "`" }
         else { "&" };
@@ -176,7 +177,14 @@ fn read_battery_and_host(
         {
             format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user)
         };
-    let line2 = format!("{}", host);
+    let mut line2 = String::from("No network data");
+    for (_, network) in &*networks
+    {
+        line2 = format!("] {} [ {} KB/s",
+                        network.received() / 1000,
+                        network.transmitted() / 1000);
+        break;
+    }
     format!("{};{}", line1, line2)
 }
 
@@ -227,10 +235,7 @@ fn main()
     let battery_manager = battery::Manager::new()
         .expect("Couldn't create instance of battery::Manager");
     let user = whoami::username();
-    let host = hostname::get()
-        .expect("Couldn't retrieve hostname")
-        .to_string_lossy()
-        .into_owned();
+    let mut networks = sysinfo::Networks::new_with_refreshed_list();
 
     if let Ok(_) = env::var(DBUS_ADDR_KEY).map(|addr| addr.contains("unix:abstract"))
     {
@@ -238,20 +243,27 @@ fn main()
     }
 
     let mut screen = 0;
-    let mut times_displayed: u8 = 0;
+    let mut times_displayed = 0;
     loop
     {
-        if times_displayed > 5
+        if times_displayed > MAX_TIMES_DISPLAYED
         {
             screen += 1;
             if screen > 2 { screen = 0; }
             times_displayed = 0;
         }
+        // Refresh network info the second before the related screen is displayed
+        else if times_displayed == MAX_TIMES_DISPLAYED && screen == 0 { networks.refresh(); }
         let content;
         match screen
         {
             0 => content = read_cpu_and_memory(&mut sys, &mut components),
-            1 => content = read_battery_and_host(&battery_manager, &user, &host, &times_displayed),
+            1 => content = read_battery_and_network(
+                &battery_manager,
+                &user,
+                &mut networks,
+                &times_displayed
+            ),
             2 =>
             {
                 match read_music()

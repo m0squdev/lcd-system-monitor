@@ -22,9 +22,8 @@ A real-time system monitoring solution that displays system metrics, battery sta
 - Battery information:
   - Charging status
   - Battery percentage
-- System information:
-  - Current username
-  - System hostname
+- Your username
+- Network upload and download rate
 - Now playing music information:
   - Playing/paused
   - Author
@@ -38,7 +37,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
 ### Arduino Client Setup
 1. Connect the I2C LCD display to your Arduino
 2. Install required [Arduino libraries](#arduino)
-3. Upload [client/client.ino](https://github.com/m0squdev/lcd-system-monitor/blob/main/client/client.ino) to your Arduino board. If arduino-cli is installed and set up, you can do so by running `make port=<port> board=<board>` in the client directory.
+3. Upload [client/client.ino](https://github.com/m0squdev/lcd-system-monitor/blob/main/client/client.ino) to your Arduino board. If arduino-cli is installed and set up, you can do so by running `make port=<port> board=<board>` in the client directory. `board` parameter example: arduino:avr:nano.
 
 ### Rust Server Setup
 1. Connect the Arduino to your computer
@@ -66,7 +65,6 @@ Execute [`server/autostart-gnome.sh`](https://github.com/m0squdev/lcd-system-mon
 
 ### Rust
 - `battery` (0.7.8)
-- `hostname` (0.4.0)
 - `mpris` (2.0.1)
 - `serial` (0.4.0)
 - `serialport` (4.6.0)

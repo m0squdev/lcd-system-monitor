@@ -10,6 +10,8 @@
 #define PLAYING_CHAR 3
 #define PAUSED_CHAR 4
 #define ELLIPSIS_CHAR 5
+#define ARROW_UP_CHAR 6
+#define ARROW_DOWN_CHAR 7
 
 const byte degBytes[] =
 {
@@ -22,7 +24,6 @@ const byte degBytes[] =
     B00000,
     B00000
 };
-
 const byte chargingBytes[] =
 {
     B01010,
@@ -34,7 +35,6 @@ const byte chargingBytes[] =
     B00100,
     B00100
 };
-
 const byte dischargingBytes[] =
 {
     B01110,
@@ -46,7 +46,6 @@ const byte dischargingBytes[] =
     B10001,
     B11111
 };
-
 const byte playingBytes[] =
 {
     B00000,
@@ -58,7 +57,6 @@ const byte playingBytes[] =
     B11011,
     B00000
 };
-
 const byte pausedBytes[] =
 {
     B10000,
@@ -70,7 +68,6 @@ const byte pausedBytes[] =
     B11000,
     B10000
 };
-
 const byte ellipsisBytes[] =
 {
     B00000,
@@ -81,6 +78,26 @@ const byte ellipsisBytes[] =
     B00000,
     B10101,
     B00000
+};
+const byte arrowUpBytes[] = {
+    B00100,
+    B01110,
+    B11111,
+    B00100,
+    B00100,
+    B00100,
+    B00100,
+    B11111
+};
+const byte arrowDownBytes[] = {
+    B00100,
+    B00100,
+    B00100,
+    B00100,
+    B11111,
+    B01110,
+    B00100,
+    B11111
 };
 
 LiquidCrystal_I2C lcd(ADDR, WIDTH, HEIGHT);
@@ -114,6 +131,12 @@ void write_line(String line)
             case '$':
                 lcd.write(PAUSED_CHAR);
                 break;
+            case '[':
+                lcd.write(ARROW_UP_CHAR);
+                break;
+            case ']':
+                lcd.write(ARROW_DOWN_CHAR);
+                break;
             default:
                 lcd.print(line[n]);
             }
@@ -131,6 +154,8 @@ void setup()
     lcd.createChar(PLAYING_CHAR, playingBytes);
     lcd.createChar(PAUSED_CHAR, pausedBytes);
     lcd.createChar(ELLIPSIS_CHAR, ellipsisBytes);
+    lcd.createChar(ARROW_UP_CHAR, arrowUpBytes);
+    lcd.createChar(ARROW_DOWN_CHAR, arrowDownBytes);
     Serial.begin(9600);
     lcd.setCursor(0, 0);
     lcd.print("Listening");

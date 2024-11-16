@@ -177,14 +177,20 @@ fn read_battery_and_network(
         {
             format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user)
         };
-    let mut line2 = String::from("No network data");
+    /*let mut line2 = String::from("No network data");
     for (_, network) in &*networks
     {
         line2 = format!("] {} [ {} KB/s",
                         network.received() / 1000,
                         network.transmitted() / 1000);
         break;
-    }
+    }*/
+    let line2 =
+        if let Some((_, network)) = networks.iter().next()
+        {
+            format!("] {} [ {} KB/s", network.received() / 1000, network.transmitted() / 1000)
+        }
+        else { String::from("No network data") };
     format!("{};{}", line1, line2)
 }
 

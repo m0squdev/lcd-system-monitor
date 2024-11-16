@@ -252,12 +252,15 @@ fn main()
             if screen > 2 { screen = 0; }
             times_displayed = 0;
         }
-        // Refresh network info the second before the related screen is displayed
-        else if times_displayed == MAX_TIMES_DISPLAYED && screen == 0 { networks.refresh(); }
         let content;
         match screen
         {
-            0 => content = read_cpu_and_memory(&mut sys, &mut components),
+            0 =>
+            {
+                // Refresh network info the second before the related screen is displayed
+                if times_displayed == MAX_TIMES_DISPLAYED { networks.refresh(); }
+                content = read_cpu_and_memory(&mut sys, &mut components)
+            },
             1 => content = read_battery_and_network(
                 &battery_manager,
                 &user,

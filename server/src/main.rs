@@ -128,8 +128,7 @@ fn auto_reconnect(mut dev: String) -> (String, SystemPort)
 fn read_cpu_and_memory(sys: &mut sysinfo::System, components: &mut sysinfo::Components) -> String
 {
     sys.refresh_cpu_all();
-    sys.refresh_memory();
-    components.refresh_list();
+    components.refresh();
     let cpu_usage = sys.global_cpu_usage();
     let mut temperatures: Vec<f32> = Vec::new();
     for component in components
@@ -140,12 +139,13 @@ fn read_cpu_and_memory(sys: &mut sysinfo::System, components: &mut sysinfo::Comp
         }
     }
     let avg_temperature = temperatures.iter().sum::<f32>() / temperatures.len() as f32;
+    let line1 = format!("CPU {:.0}% {:.0}^C", cpu_usage, avg_temperature);
 
+    sys.refresh_memory();
     let memory_usage = sys.used_memory() as f32 / sys.total_memory() as f32 * 100.0;
     let swap_usage = sys.used_swap() as f32 / sys.total_swap() as f32 * 100.0;
-
-    let line1 = format!("CPU {:.0}% {:.0}^C", cpu_usage, avg_temperature);
     let line2 = format!("RAM {:.0}% Swp {:.0}%", memory_usage, swap_usage);
+
     format!("{};{}", line1, line2)
 }
 
@@ -156,7 +156,6 @@ fn read_battery_and_network(
     times_displayed: &u8
 ) -> String
 {
-    networks.refresh();
     let mut batteries = battery_manager.batteries()
         .expect("Couldn't retrieve batteries");
     let battery = batteries
@@ -167,7 +166,6 @@ fn read_battery_and_network(
         if battery.state().to_string() == "charging" { "`" }
         else { "&" };
     let battery_percentage = battery.state_of_charge().value * 100.0;
-
     let line1 =
         if times_displayed % 2 == 0 && battery_percentage < 10.0 && battery_state_symbol == "&"
         {
@@ -177,12 +175,15 @@ fn read_battery_and_network(
         {
             format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user)
         };
+
+    networks.refresh();
     let line2 =
         if let Some((_, network)) = networks.iter().next()
         {
             format!("] {} [ {} KB/s", network.received() / 1000, network.transmitted() / 1000)
         }
         else { String::from("No network data") };
+
     format!("{};{}", line1, line2)
 }
 

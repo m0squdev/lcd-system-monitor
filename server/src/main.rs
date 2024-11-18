@@ -230,7 +230,7 @@ fn main()
     }
 
     let mut sys = sysinfo::System::new();
-    let mut components = sysinfo::Components::new();
+    let mut components = sysinfo::Components::new_with_refreshed_list();
     let battery_manager = battery::Manager::new()
         .expect("Couldn't create instance of battery::Manager");
     let user = whoami::username();

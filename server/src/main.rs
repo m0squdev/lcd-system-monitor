@@ -176,7 +176,7 @@ fn read_battery_and_network(
             format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user)
         };
 
-    networks.refresh();
+    networks.refresh_list();
     let line2 =
         if let Some((_, network)) = networks.iter().next()
         {
@@ -200,9 +200,9 @@ fn read_music() -> Option<String>
         {
             let artists = metadata
                 .artists()
-                .unwrap_or(vec!["Artist: error!"])
+                .unwrap_or(vec!["Unknown artist"])
                 .join(", ");
-            let title = metadata.title().unwrap_or("Title: error!");
+            let title = metadata.title().unwrap_or("Unknown title");
             return Some(format!(
                 "{} {};{}",
                 playing_char,

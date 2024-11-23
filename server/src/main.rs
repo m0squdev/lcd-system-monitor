@@ -258,7 +258,7 @@ fn main()
             {
                 // Refresh network info the second before the related screen is displayed
                 if times_displayed == MAX_TIMES_DISPLAYED { networks.refresh(); }
-                content = read_cpu_and_memory(&mut sys, &mut components)
+                content = read_cpu_and_memory(&mut sys, &mut components);
             },
             1 => content = read_battery_and_network(
                 &battery_manager,
@@ -268,14 +268,11 @@ fn main()
             ),
             2 =>
             {
-                match read_music()
+                if let Some(music_content) = read_music() { content = music_content; }
+                else
                 {
-                    Some(music_content) => content = music_content,
-                    None =>
-                    {
-                        screen = 0;
-                        content = read_cpu_and_memory(&mut sys, &mut components);
-                    }
+                    screen = 0;
+                    content = read_cpu_and_memory(&mut sys, &mut components);
                 }
             },
             _ => panic!("No matching screen")

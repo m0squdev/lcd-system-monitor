@@ -79,7 +79,8 @@ const byte ellipsisBytes[] =
     B10101,
     B00000
 };
-const byte arrowUpBytes[] = {
+const byte arrowUpBytes[] =
+{
     B00100,
     B01110,
     B11111,
@@ -89,7 +90,8 @@ const byte arrowUpBytes[] = {
     B00100,
     B11111
 };
-const byte arrowDownBytes[] = {
+const byte arrowDownBytes[] =
+{
     B00100,
     B00100,
     B00100,

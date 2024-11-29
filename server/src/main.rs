@@ -163,7 +163,7 @@ fn read_battery_and_network(
         .expect("Couldn't retrieve battery")
         .expect("Couldn't retrieve battery information");
     let battery_state_symbol =
-        if battery.state().to_string() == "charging" { "`" }
+        if battery.state() == battery::State::Charging { "`" }
         else { "&" };
     let battery_percentage = battery.state_of_charge().value * 100.0;
     let line1 =
@@ -177,13 +177,12 @@ fn read_battery_and_network(
         };
 
     networks.refresh_list();
-    let line2 =
-        if let Some((_, network)) = networks.iter().next()
-        {
-            format!("] {} [ {} KB/s", network.received() / 1000, network.transmitted() / 1000)
-        }
-        else { String::from("No network data") };
-
+    let (total_received, total_transmitted) = networks.iter()
+        .fold((0, 0), |(received, transmitted), (_, network)|
+        { (received + network.received(), transmitted + network.transmitted()) }
+        );
+    let line2 = format!("] {} [ {} KB/s", total_received / 1000, total_transmitted / 1000);
+    
     format!("{};{}", line1, line2)
 }
 
@@ -217,7 +216,7 @@ fn read_music() -> Option<String>
 
 fn main()
 {
-    let mut dev = env::args().nth(1).unwrap_or_else(|| detect_dev());
+    let mut dev = env::args().nth(1).unwrap_or(detect_dev());
     let mut port;
     match connect(&dev)
     {

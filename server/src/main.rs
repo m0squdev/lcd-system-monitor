@@ -179,7 +179,7 @@ fn read_battery_and_network(
     networks.refresh_list();
     let (total_received, total_transmitted) = networks.iter()
         .fold((0, 0), |(received, transmitted), (_, network)|
-        { (received + network.received(), transmitted + network.transmitted()) }
+            (received + network.received(), transmitted + network.transmitted())
         );
     let line2 = format!("] {} [ {} KB/s", total_received / 1000, total_transmitted / 1000);
     

@@ -52,10 +52,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
 ### Server Autostart (Optional)
 
 #### With systemd (Recommended)
-Execute [`server/autostart-systemd.sh`](https://github.com/m0squdev/lcd-system-monitor/blob/main/autostart-systemd.sh) to make the program start automatically on login
-
-#### With GNOME (Not Recommended)
-Execute [`server/autostart-gnome.sh`](https://github.com/m0squdev/lcd-system-monitor/blob/main/autostart-gnome.sh) to make the program start automatically with your GNOME session
+Execute [`server/autostart-systemd.sh`](https://github.com/m0squdev/lcd-system-monitor/blob/main/server/autostart-systemd.sh) to make the program start automatically on login
 
 ## Dependencies
 

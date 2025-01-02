@@ -156,25 +156,29 @@ fn read_battery_and_network(
     times_displayed: &u8
 ) -> String
 {
-    let mut batteries = battery_manager.batteries()
-        .expect("Couldn't retrieve batteries");
-    let battery = batteries
-        .next()
-        .expect("Couldn't retrieve battery")
-        .expect("Couldn't retrieve battery information");
-    let battery_state_symbol =
-        if battery.state() == battery::State::Charging { "`" }
-        else { "&" };
-    let battery_percentage = battery.state_of_charge().value * 100.0;
-    let line1 =
-        if times_displayed % 2 == 0 && battery_percentage < 10.0 && battery_state_symbol == "&"
-        {
-            String::from("& RECHARGE NOW")
-        }
-        else
-        {
-            format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user)
-        };
+    let line1;
+    if let Ok(batteries) = battery_manager.batteries()
+    {
+        let battery = batteries
+            .into_iter()
+            .next()
+            .expect("Battery doesn't exist")
+            .expect("Couldn't retrieve battery data");
+        let battery_state_symbol =
+            if battery.state() == battery::State::Charging { "`" }
+            else { "&" };
+        let battery_percentage = battery.state_of_charge().value * 100.0;
+        line1 =
+            if times_displayed % 2 == 0 && battery_percentage < 10.0 && battery_state_symbol == "&"
+            {
+                String::from("& RECHARGE NOW")
+            }
+            else
+            {
+                format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user)
+            };
+    }
+    else { line1 = format!("Usr:{}", user); }
 
     networks.refresh_list();
     let (total_received, total_transmitted) = networks.iter()

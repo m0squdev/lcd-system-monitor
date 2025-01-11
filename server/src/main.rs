@@ -1,4 +1,5 @@
 use battery;
+use hostname;
 use mpris::
 {
     self,
@@ -26,7 +27,6 @@ use std::
     time::Duration
 };
 use sysinfo;
-use whoami;
 
 const CONNECTION_ATTEMPTS: u8 = 3;
 const MAX_TIMES_DISPLAYED: u8 = 5;
@@ -151,23 +151,22 @@ fn read_cpu_and_memory(sys: &mut sysinfo::System, components: &mut sysinfo::Comp
 
 fn read_battery_and_network(
     battery_manager: &battery::Manager,
-    user: &String,
+    hostname: &String,
     networks: &mut sysinfo::Networks,
     times_displayed: &u8
 ) -> String
 {
     let line1;
-    if let Ok(batteries) = battery_manager.batteries()
+    if let Some(first_battery) = battery_manager
+        .batteries()
+        .expect("Couldn't retrieve batteries")
+        .next()
     {
-        let battery = batteries
-            .into_iter()
-            .next()
-            .expect("Battery doesn't exist")
-            .expect("Couldn't retrieve battery data");
+        let battery_data = first_battery.expect("Couldn't retrieve battery data");
         let battery_state_symbol =
-            if battery.state() == battery::State::Charging { "`" }
+            if battery_data.state() == battery::State::Charging { "`" }
             else { "&" };
-        let battery_percentage = battery.state_of_charge().value * 100.0;
+        let battery_percentage = battery_data.state_of_charge().value * 100.0;
         line1 =
             if times_displayed % 2 == 0 && battery_percentage < 10.0 && battery_state_symbol == "&"
             {
@@ -175,10 +174,10 @@ fn read_battery_and_network(
             }
             else
             {
-                format!("{} {:.0}% Usr:{}", battery_state_symbol, battery_percentage, user)
+                format!("{} {:.0}% {}", battery_state_symbol, battery_percentage, hostname)
             };
     }
-    else { line1 = format!("Usr:{}", user); }
+    else { line1 = String::from(hostname); }
 
     networks.refresh_list();
     let (total_received, total_transmitted) = networks.iter()
@@ -236,7 +235,10 @@ fn main()
     let mut components = sysinfo::Components::new_with_refreshed_list();
     let battery_manager = battery::Manager::new()
         .expect("Couldn't create instance of battery::Manager");
-    let user = whoami::username();
+    let hostname = hostname::get()
+        .expect("Couldn't retrieve hostname")
+        .into_string()
+        .expect("Couldn't convert hostname to string");
     let mut networks = sysinfo::Networks::new_with_refreshed_list();
 
     if let Ok(_) = env::var(DBUS_ADDR_KEY).map(|addr| addr.contains("unix:abstract"))
@@ -265,7 +267,7 @@ fn main()
             },
             1 => content = read_battery_and_network(
                 &battery_manager,
-                &user,
+                &hostname,
                 &mut networks,
                 &times_displayed
             ),

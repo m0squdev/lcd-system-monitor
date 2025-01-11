@@ -22,7 +22,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
 - Battery information:
   - Charging status
   - Battery percentage
-- Your username
+- Your hostname
 - Network upload and download rate
 - Now playing music information:
   - Playing/paused
@@ -62,8 +62,8 @@ Execute [`server/autostart-systemd.sh`](https://github.com/m0squdev/lcd-system-m
 
 ### Rust
 - `battery` (0.7.8)
+- `hostname` (0.4.0)
 - `mpris` (2.0.1)
 - `serial` (0.4.0)
 - `serialport` (4.6.0)
 - `sysinfo` (0.32.0)
-- `whoami` (1.5.2)

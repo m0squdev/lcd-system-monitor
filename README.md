@@ -51,7 +51,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
 ### Arduino Client Setup
 1. Install `arduino-cli`
 2. Navigate to [client](client)
-3. Install the required [libraries](#arduino):
+3. Install the required [libraries](#arduino) with `arduino-cli` (user-wide):
    ```bash
    make install-libs
    ```
@@ -60,7 +60,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
    ```bash
    make port=<port> board=<board>
    ```
-   The arguments are directly passed to arduino-cli, hence the board parameter syntax is the same you'd expect when using arduino-cli. Board parameter example: arduino:avr:nano.
+   The arguments are directly passed to `arduino-cli`, hence the board parameter syntax is the same you'd expect when using `arduino-cli`. Board parameter example: arduino:avr:nano.
 
 ### Rust Server Setup
 1. Install `cargo`
@@ -82,7 +82,7 @@ Execute [`server/autostart-systemd.sh`](server/autostart-systemd.sh) to make the
 ## Uninstallation
 
 ### Arduino Client Dependencies Removal
-Uninstall the libraries **if you don't need them**:
+Uninstall the libraries **if you don't need them** (user-wide):
 ```bash
 make uninstall-libs
 ```

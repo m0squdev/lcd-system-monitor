@@ -88,7 +88,7 @@ make uninstall-libs
 ```
 
 ### Rust Server Autostart Removal
-You only need to do this if you did [this step](#server-autostart-with-systemd-optional) earlier.
+You only need to do this if you followed [this step](#server-autostart-with-systemd-optional) before.
 ```bash
 systemctl disable --now lcd-system-monitor.service
 ```

@@ -4,6 +4,7 @@
 #define ADDR 0x27
 #define WIDTH 16
 #define HEIGHT 2
+
 #define DEG_CHAR 0
 #define CHARGING_CHAR 1
 #define DISCHARGING_CHAR 2
@@ -12,6 +13,10 @@
 #define ELLIPSIS_CHAR 5
 #define ARROW_UP_CHAR 6
 #define ARROW_DOWN_CHAR 7
+
+#define STANDBY_THRESHOLD 3
+
+LiquidCrystal_I2C lcd(ADDR, WIDTH, HEIGHT);
 
 const byte degBytes[] =
 {
@@ -102,9 +107,18 @@ const byte arrowDownBytes[] =
     B11111
 };
 
-LiquidCrystal_I2C lcd(ADDR, WIDTH, HEIGHT);
+int timesNotResponded = STANDBY_THRESHOLD;
 
-void write_line(String line)
+void standby()
+{
+    lcd.noBacklight();
+    lcd.setCursor(0, 0);
+    lcd.print("Device not       ");
+    lcd.setCursor(0, 1);
+    lcd.print("connected        ");
+}
+
+void writeLine(String line)
 {
     for (short n = 0; n < WIDTH; n++)
     {
@@ -149,7 +163,6 @@ void write_line(String line)
 void setup()
 {
     lcd.init();
-    lcd.backlight();
     lcd.createChar(DEG_CHAR, degBytes);
     lcd.createChar(CHARGING_CHAR, chargingBytes);
     lcd.createChar(DISCHARGING_CHAR, dischargingBytes);
@@ -159,27 +172,26 @@ void setup()
     lcd.createChar(ARROW_UP_CHAR, arrowUpBytes);
     lcd.createChar(ARROW_DOWN_CHAR, arrowDownBytes);
     Serial.begin(9600);
-    lcd.setCursor(0, 0);
-    lcd.print("Listening");
-    lcd.setCursor(0, 1);
-    lcd.print("to serial");
-    lcd.write(ELLIPSIS_CHAR);
 }
 
 void loop()
 {
     if (Serial.available())
     {
+        if (timesNotResponded >= STANDBY_THRESHOLD) lcd.backlight();
+        timesNotResponded = 0;
         String data = Serial.readStringUntil('\n');
         int separatorIndex = data.indexOf(';');
-        String line1 = data.substring(0, separatorIndex);
         lcd.setCursor(0, 0);
-        write_line(line1);
-        String line2 = data.substring(separatorIndex + 1);
+        String line1 = data.substring(0, separatorIndex);
+        writeLine(line1);
         lcd.setCursor(0, 1);
-        write_line(line2);
-        /* It's better for this delay to be smaller than the delay of the server
-           since you have to consider the time it takes to print to the LCD */
-        delay(900);
+        String line2 = data.substring(separatorIndex + 1);
+        writeLine(line2);    
     }
+    else if (timesNotResponded == STANDBY_THRESHOLD) standby();
+    else timesNotResponded++;
+    /* It's better for this delay to be smaller than the delay of the server
+       since you have to consider the time it takes to write to the LCD */
+    delay(900);
 }

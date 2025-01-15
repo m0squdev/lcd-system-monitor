@@ -19,7 +19,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
   - CPU temperature
   - RAM usage percentage
   - Swap usage percentage
-- Battery information:
+- Battery information (if available):
   - Charging status
   - Battery percentage
 - Your hostname
@@ -31,28 +31,6 @@ A real-time system monitoring solution that displays system metrics, battery sta
 - 1-second refresh rate
 - Serial communication at 9600 baud
 - Automatic serial port detection and reconnection
-
-## Installation
-
-### Arduino Client Setup
-1. Connect the I2C LCD display to your Arduino
-2. Install required [Arduino libraries](#arduino)
-3. Upload [client/client.ino](https://github.com/m0squdev/lcd-system-monitor/blob/main/client/client.ino) to your Arduino board. If arduino-cli is installed and set up, you can do so by running `make port=<port> board=<board>` in the client directory. `board` parameter example: arduino:avr:nano.
-
-### Rust Server Setup
-1. Connect the Arduino to your computer
-2. Navigate to server directory
-3. Run the server application with Cargo:
-   ```bash
-   cargo run --release
-   ```
-   or alternatively build the application with `cargo build --release` and execute the newly generated file server/target/release/server. **Warning:** cargo sets some fundamental environment variables before running the executable, hence doing it directly is not recommended.
-4. The server will try to automatically detect the client device. It will connect to the first device found that has the Arduino vendor ID (0x0403). If none are found, it will connect to the first USB device found. If you want to bind the program to a known device specify it as an argument (also works with `cargo run --release`). Nevertheless, I don't recommend to do it on Linux as the Arduino might get bound onto another device when it is connected a second time.
-
-### Server Autostart (Optional)
-
-#### With systemd (Recommended)
-Execute [`server/autostart-systemd.sh`](https://github.com/m0squdev/lcd-system-monitor/blob/main/server/autostart-systemd.sh) to make the program start automatically on login
 
 ## Dependencies
 
@@ -67,3 +45,50 @@ Execute [`server/autostart-systemd.sh`](https://github.com/m0squdev/lcd-system-m
 - `serial` (0.4.0)
 - `serialport` (4.6.0)
 - `sysinfo` (0.32.0)
+
+## Installation
+
+### Arduino Client Setup
+1. Install `arduino-cli`
+2. Navigate to [client](client)
+3. Install the required [libraries](#arduino):
+   ```bash
+   make install-libs
+   ```
+4. Connect the I2C LCD display to your Arduino. The code is intended to be ran with a 16x2 display.
+5. Compile [client/client.ino](client/client.ino) and upload it to your board:
+   ```bash
+   make port=<port> board=<board>
+   ```
+   The arguments are directly passed to arduino-cli, hence the board parameter syntax is the same you'd expect when using arduino-cli. Board parameter example: arduino:avr:nano.
+
+### Rust Server Setup
+1. Install `cargo`
+2. Navigate to [server](server)
+3. Build the program:
+   ```bash
+   cargo build --release
+   ```
+## Rust Server Execution
+Execute the program:
+```bash
+cargo run --release
+```
+The program will try to detect automatically the client device. It will connect to the first device found that has the Arduino vendor ID (0x0403). If none are found, it will connect to the first USB device found. If you want to bind the program to a certain device append it to the end of the command. Nevertheless, I don't recommend doing it on Linux as the Arduino might be recognised as another device when it is connected a second time.
+
+### Server Autostart With Systemd (Optional)
+Execute [`server/autostart-systemd.sh`](server/autostart-systemd.sh) to make the program start automatically on login
+
+## Uninstallation
+
+### Arduino Client Dependencies Removal
+Uninstall the libraries **if you don't need them**:
+```bash
+make uninstall-libs
+```
+
+### Rust Server Autostart Removal
+You only need to do this if you did [this step](#server-autostart-with-systemd-optional) earlier.
+```bash
+systemctl disable --now lcd-system-monitor.service
+```

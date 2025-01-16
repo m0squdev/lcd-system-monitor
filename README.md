@@ -19,18 +19,20 @@ A real-time system monitoring solution that displays system metrics, battery sta
   - CPU temperature
   - RAM usage percentage
   - Swap usage percentage
-- Battery information (if available):
-  - Charging status
-  - Battery percentage
+  - GPU usage percentage (Nvidia only) *
+  - GPU temperature (Nvidia only) *
+  - GPU memory usage percentage (Nvidia only) *
+- Battery information:
+  - Charging status *
+  - Battery percentage *
 - Your hostname
 - Network upload and download rate
 - Now playing music information:
   - Playing/paused
   - Author
   - Song title
-- 1-second refresh rate
-- Serial communication at 9600 baud
-- Automatic serial port detection and reconnection
+
+(*) Information will only be shown if available
 
 ## Dependencies
 
@@ -39,12 +41,7 @@ A real-time system monitoring solution that displays system metrics, battery sta
 - [`LiquidCrystal_I2C`](https://github.com/johnrickman/LiquidCrystal_I2C) (1.1.2)
 
 ### Rust
-- `battery` (0.7.8)
-- `hostname` (0.4.0)
-- `mpris` (2.0.1)
-- `serial` (0.4.0)
-- `serialport` (4.6.0)
-- `sysinfo` (0.32.0)
+See [`server/Cargo.toml`](server/Cargo.toml)
 
 ## Installation
 

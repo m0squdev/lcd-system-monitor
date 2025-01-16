@@ -5,6 +5,12 @@ use mpris::
     self,
     PlaybackStatus
 };
+use nvml_wrapper::
+{
+    self,
+    enum_wrappers::device::TemperatureSensor,
+    Nvml
+};
 use serial::
 {
     prelude::*,
@@ -125,7 +131,7 @@ fn auto_reconnect(mut dev: String) -> (String, SystemPort)
     }
 }
 
-fn read_cpu_and_memory(sys: &mut sysinfo::System, components: &mut sysinfo::Components) -> String
+fn get_screen0_content(sys: &mut sysinfo::System, components: &mut sysinfo::Components) -> String
 {
     sys.refresh_cpu_all();
     components.refresh();
@@ -144,40 +150,65 @@ fn read_cpu_and_memory(sys: &mut sysinfo::System, components: &mut sysinfo::Comp
     sys.refresh_memory();
     let memory_usage = sys.used_memory() as f32 / sys.total_memory() as f32 * 100.0;
     let swap_usage = sys.used_swap() as f32 / sys.total_swap() as f32 * 100.0;
-    let line2 = format!("RAM {:.0}% Swp {:.0}%", memory_usage, swap_usage);
+    let line2 = format!("Mem {:.0}% Swp {:.0}%", memory_usage, swap_usage);
 
     format!("{};{}", line1, line2)
 }
 
-fn read_battery_and_network(
+fn get_screen1_content(nvml_device: &nvml_wrapper::Device) -> String
+{
+    let line1 =
+    {
+        let gpu_usage = nvml_device
+            .utilization_rates()
+            .expect("Couldn't retrieve GPU usage")
+            .gpu;
+        let gpu_temperature = nvml_device
+            .temperature(TemperatureSensor::Gpu)
+            .expect("Couldn't retrieve GPU temperature");
+        format!("GPU {}% {}^C", gpu_usage, gpu_temperature)
+    };
+
+    let line2 =
+    {
+        let memory_info = nvml_device
+            .memory_info()
+            .expect("Couldn't retrieve GPU memory info");
+        let memory_usage =
+            memory_info.used as f64 / memory_info.total as f64 * 100.0;
+        format!("Mem {:.0}%", memory_usage)
+    };
+
+    format!("{};{}", line1, line2)
+}
+
+fn get_screen2_content(
     battery_manager: &battery::Manager,
     hostname: &String,
     networks: &mut sysinfo::Networks,
     times_displayed: &u8
 ) -> String
 {
-    let line1;
-    if let Some(first_battery) = battery_manager
-        .batteries()
-        .expect("Couldn't retrieve batteries")
-        .next()
+    let line1 =
     {
-        let battery_data = first_battery.expect("Couldn't retrieve battery data");
-        let battery_state_symbol =
-            if battery_data.state() == battery::State::Charging { "`" }
-            else { "&" };
-        let battery_percentage = battery_data.state_of_charge().value * 100.0;
-        line1 =
+        if let Some(first_battery) = battery_manager
+            .batteries()
+            .expect("Couldn't retrieve batteries")
+            .next()
+        {
+            let battery_data = first_battery.expect("Couldn't retrieve battery data");
+            let battery_state_symbol =
+                if battery_data.state() == battery::State::Charging { "`" } else { "&" };
+            let battery_percentage = battery_data.state_of_charge().value * 100.0;
             if times_displayed % 2 == 0 && battery_percentage < 10.0 && battery_state_symbol == "&"
             {
                 String::from("& RECHARGE NOW")
-            }
-            else
-            {
+            } else {
                 format!("{} {:.0}% {}", battery_state_symbol, battery_percentage, hostname)
-            };
-    }
-    else { line1 = String::from(hostname); }
+            }
+        }
+        else { String::from(hostname) }
+    };
 
     networks.refresh_list();
     let (total_received, total_transmitted) = networks.iter()
@@ -189,7 +220,7 @@ fn read_battery_and_network(
     format!("{};{}", line1, line2)
 }
 
-fn read_music() -> Option<String>
+fn get_screen3_content() -> Option<String>
 {
     let player_finder = mpris::PlayerFinder::new()
         .expect("Couldn't retrieve playing music");
@@ -240,6 +271,9 @@ fn main()
         .into_string()
         .expect("Couldn't convert hostname to string");
     let mut networks = sysinfo::Networks::new_with_refreshed_list();
+    let nvml = Nvml::init().expect("Couldn't initialize NVML");
+    let nvml_result = nvml.device_by_index(0);
+    let nvml_no_devices = nvml_result.is_err();
 
     if let Ok(_) = env::var(DBUS_ADDR_KEY).map(|addr| addr.contains("unix:abstract"))
     {
@@ -250,7 +284,8 @@ fn main()
     let mut times_displayed = 0;
     loop
     {
-        if times_displayed > MAX_TIMES_DISPLAYED
+        if times_displayed == 2 && nvml_no_devices { times_displayed += 1; }
+        else if times_displayed > MAX_TIMES_DISPLAYED
         {
             screen += 1;
             if screen > 2 { screen = 0; }
@@ -263,21 +298,25 @@ fn main()
             {
                 // Refresh network info the second before the related screen is displayed
                 if times_displayed == MAX_TIMES_DISPLAYED { networks.refresh(); }
-                content = read_cpu_and_memory(&mut sys, &mut components);
+                content = get_screen0_content(&mut sys, &mut components);
             },
-            1 => content = read_battery_and_network(
+            1 => content = get_screen1_content(&nvml_result.as_ref().unwrap()),
+            2 => content = get_screen2_content(
                 &battery_manager,
                 &hostname,
                 &mut networks,
                 &times_displayed
             ),
-            2 =>
+            3 =>
             {
-                if let Some(music_content) = read_music() { content = music_content; }
+                if let Some(music_content) = get_screen3_content()
+                {
+                    content = music_content;
+                }
                 else
                 {
                     screen = 0;
-                    content = read_cpu_and_memory(&mut sys, &mut components);
+                    content = get_screen0_content(&mut sys, &mut components);
                 }
             },
             _ => panic!("No matching screen")

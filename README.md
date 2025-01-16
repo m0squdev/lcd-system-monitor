@@ -57,7 +57,7 @@ See [`server/Cargo.toml`](server/Cargo.toml)
    ```bash
    make port=<port> board=<board>
    ```
-   The arguments are directly passed to `arduino-cli`, hence the board parameter syntax is the same you'd expect when using `arduino-cli`. Board parameter example: arduino:avr:nano.
+   The arguments are directly passed to `arduino-cli`, hence the `board` parameter syntax is the same you'd expect when using `arduino-cli`. Example use: `make port=/dev/ttyUSB0 board=arduino:avr:nano`.
 
 ### Rust Server Setup
 1. Install `cargo`

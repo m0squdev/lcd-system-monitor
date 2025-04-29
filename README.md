@@ -26,7 +26,6 @@ A real-time system monitoring solution that displays system metrics, battery sta
 - Battery information *
   - Charging status
   - Battery percentage
-- Hostname
 - Network upload and download rate
 - Now playing music information *
   - Playing/paused

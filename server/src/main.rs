@@ -1,5 +1,4 @@
 use battery;
-use hostname;
 use mpris::
 {
     self,
@@ -36,7 +35,6 @@ use sysinfo;
 
 const CONNECTION_ATTEMPTS: u8 = 3;
 const MAX_TIMES_DISPLAYED: u8 = 5;
-const DBUS_ADDR_KEY: &str = "DBUS_SESSION_BUS_ADDRESS";
 const CONNECTION_SLEEP: Duration = Duration::from_secs(5);
 
 fn flush_stdout() { io::stdout().flush().expect("Couldn't flush stdout"); }
@@ -184,13 +182,16 @@ fn get_screen1_content(nvml_device: &nvml_wrapper::Device) -> String
 
 fn get_screen2_content(
     battery_manager: &battery::Manager,
-    hostname: &String,
-    networks: &mut sysinfo::Networks,
-    times_displayed: &u8
+    networks: &mut sysinfo::Networks
 ) -> String
 {
-    let line1 =
-    {
+    networks.refresh_list();
+    let (total_received, total_transmitted) = networks.iter()
+        .fold((0, 0), |(received, transmitted), (_, network)|
+            (received + network.received(), transmitted + network.transmitted())
+        );
+
+    let (line1, line2) =
         if let Some(first_battery) = battery_manager
             .batteries()
             .expect("Couldn't retrieve batteries")
@@ -200,22 +201,14 @@ fn get_screen2_content(
             let battery_state_symbol =
                 if battery_data.state() == battery::State::Charging { "`" } else { "&" };
             let battery_percentage = battery_data.state_of_charge().value * 100.0;
-            if times_displayed % 2 == 0 && battery_percentage < 10.0 && battery_state_symbol == "&"
-            {
-                String::from("& RECHARGE NOW")
-            } else {
-                format!("{} {:.0}% {}", battery_state_symbol, battery_percentage, hostname)
-            }
+            (format!("{} {:.0}%", battery_state_symbol, battery_percentage),
+             format!("] {} [ {} KB/s", total_received / 1000, total_transmitted / 1000))
         }
-        else { String::from(hostname) }
-    };
-
-    networks.refresh_list();
-    let (total_received, total_transmitted) = networks.iter()
-        .fold((0, 0), |(received, transmitted), (_, network)|
-            (received + network.received(), transmitted + network.transmitted())
-        );
-    let line2 = format!("] {} [ {} KB/s", total_received / 1000, total_transmitted / 1000);
+        else
+        {
+            (format!("] {} KB/s", total_received / 1000),
+             format!("[ {} KB/s", total_transmitted / 1000))
+        };
     
     format!("{};{}", line1, line2)
 }
@@ -266,21 +259,12 @@ fn main()
     let mut components = sysinfo::Components::new_with_refreshed_list();
     let battery_manager = battery::Manager::new()
         .expect("Couldn't create instance of battery::Manager");
-    let hostname = hostname::get()
-        .expect("Couldn't retrieve hostname")
-        .into_string()
-        .expect("Couldn't convert hostname to string");
     let mut networks = sysinfo::Networks::new_with_refreshed_list();
     let nvml = Nvml::init();
     let nvml_device = nvml
         .as_ref()
         .ok()
         .and_then(|nvml| nvml.device_by_index(0).ok());
-
-    if let Ok(_) = env::var(DBUS_ADDR_KEY).map(|addr| addr.contains("unix:abstract"))
-    {
-        env::set_var(DBUS_ADDR_KEY, "unix:path=/run/user/1000/bus");
-    }
 
     let mut screen = 0;
     let mut times_displayed = 0;
@@ -306,9 +290,7 @@ fn main()
             },
             2 => content = get_screen2_content(
                 &battery_manager,
-                &hostname,
-                &mut networks,
-                &times_displayed
+                &mut networks
             ),
             3 =>
             {

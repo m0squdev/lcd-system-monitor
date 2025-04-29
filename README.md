@@ -14,20 +14,21 @@ A real-time system monitoring solution that displays system metrics, battery sta
 - Rust server application (./server)
 
 ## Features
-- Real-time monitoring of system metrics:
-  - CPU usage percentage
-  - CPU temperature
-  - RAM usage percentage
-  - Swap usage percentage
-  - GPU usage percentage (Nvidia only) *
-  - GPU temperature (Nvidia only) *
-  - GPU memory usage percentage (Nvidia only) *
-- Battery information:
-  - Charging status *
-  - Battery percentage *
-- Your hostname
+- CPU
+  - Usage
+  - Percentage
+- RAM usage
+- Swap usage
+- GPU (Nvidia only) *
+  - Usage
+  - Temperature
+  - Memory usage
+- Battery information *
+  - Charging status
+  - Battery percentage
+- Hostname
 - Network upload and download rate
-- Now playing music information:
+- Now playing music information *
   - Playing/paused
   - Author
   - Song title

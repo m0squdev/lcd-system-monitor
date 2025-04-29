@@ -271,9 +271,11 @@ fn main()
         .into_string()
         .expect("Couldn't convert hostname to string");
     let mut networks = sysinfo::Networks::new_with_refreshed_list();
-    let nvml = Nvml::init().expect("Couldn't initialize NVML");
-    let nvml_result = nvml.device_by_index(0);
-    let nvml_no_devices = nvml_result.is_err();
+    let nvml = Nvml::init();
+    let nvml_device = nvml
+        .as_ref()
+        .ok()
+        .and_then(|nvml| nvml.device_by_index(0).ok());
 
     if let Ok(_) = env::var(DBUS_ADDR_KEY).map(|addr| addr.contains("unix:abstract"))
     {
@@ -284,23 +286,23 @@ fn main()
     let mut times_displayed = 0;
     loop
     {
-        if times_displayed == 2 && nvml_no_devices { times_displayed += 1; }
-        else if times_displayed > MAX_TIMES_DISPLAYED
+        if times_displayed > MAX_TIMES_DISPLAYED
         {
             screen += 1;
-            if screen > 2 { screen = 0; }
+            if screen == 1 && nvml_device.is_none() { screen += 1; }
+            else if screen > 3 { screen = 0; }
             times_displayed = 0;
         }
         let content;
         match screen
         {
-            0 =>
+            0 => content = get_screen0_content(&mut sys, &mut components),
+            1 =>
             {
+                content = get_screen1_content(&nvml_device.as_ref().unwrap());
                 // Refresh network info the second before the related screen is displayed
                 if times_displayed == MAX_TIMES_DISPLAYED { networks.refresh(); }
-                content = get_screen0_content(&mut sys, &mut components);
             },
-            1 => content = get_screen1_content(&nvml_result.as_ref().unwrap()),
             2 => content = get_screen2_content(
                 &battery_manager,
                 &hostname,

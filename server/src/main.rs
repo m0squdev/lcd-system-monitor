@@ -288,9 +288,10 @@ fn main()
     {
         if times_displayed > MAX_TIMES_DISPLAYED
         {
-            screen += 1;
-            if screen == 1 && nvml_device.is_none() { screen += 1; }
-            else if screen > 3 { screen = 0; }
+            screen =
+                if screen == 0 && nvml_device.is_none() { 2 }
+                else if screen >= 3 { 0 }
+                else { screen + 1 };
             times_displayed = 0;
         }
         let content;

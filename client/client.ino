@@ -120,7 +120,7 @@ void standby()
 
 void writeLine(String line)
 {
-    for (short n = 0; n < WIDTH; n++)
+    for (int n = 0; n < WIDTH; n++)
     {
         if (n >= line.length()) lcd.print(" ");
         else if (n == WIDTH - 1 && n + 1 < line.length())
@@ -133,7 +133,7 @@ void writeLine(String line)
             switch (line[n])
             {
             case '^':
-                lcd.write(DEG_CHAR);
+                lcd.write(DEG_CHAR);  // Use 0xDF for the standard degree character
                 break;
             case '`':
                 lcd.write(CHARGING_CHAR);
